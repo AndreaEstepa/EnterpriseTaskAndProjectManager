@@ -18,10 +18,6 @@ The application is structured into a multi-layer **Clean Architecture** layout d
 ---
 
 ## 3. Comprehensive CRUD & Functional Requirements
-
-### 3.1 Module 1: Authentication & User Management (IAM CRUD)
-Responsible for user registration, profile management, and credential lifecycle.
-
 ### 3.1 Module 1: Authentication & User Management (IAM CRUD)
 Responsible for user registration, profile management, credential lifecycle, and secure token issuance.
 
@@ -655,7 +651,7 @@ The operational core handling workloads, task assignments, and strict lifecycle 
         *   `401 Unauthorized`: Missing or invalid token.
         *   `403 Forbidden`: User lacks permission.
         *   `404 Not Found`: Task ID does not exist.
-        
+
 
 ### 3.5 Module 5: Task Comments (Comment CRUD)
 Handles internal team collaboration, threaded discussions, and note-taking associated with specific tasks.
@@ -748,7 +744,6 @@ Handles internal team collaboration, threaded discussions, and note-taking assoc
 ---
 
 ## 5. Complete API Endpoints Reference Matrix
-
 | Module | Method | Endpoint | Description | Auth / Security Rule |
 | :--- | :--- | :--- | :--- | :--- |
 | **IAM** | `POST` | `/api/v1/auth/register` | Register new user account | Public |
@@ -763,9 +758,10 @@ Handles internal team collaboration, threaded discussions, and note-taking assoc
 | **Org** | `PUT` | `/api/v1/organizations/{id}`| Update organization meta | Org `ADMIN` |
 | **Org** | `DELETE`| `/api/v1/organizations/{id}`| Delete organization container| Org `ADMIN` |
 | **Org** | `POST` | `/api/v1/organizations/{id}/members` | Add organization member | Org `ADMIN` |
+| **Org** | `PUT` | `/api/v1/organizations/{id}/members/{uId}` | Update member role | Org `ADMIN` |
 | **Org** | `DELETE`| `/api/v1/organizations/{id}/members/{uId}` | Remove organization member | Org `ADMIN` |
 | **Proj** | `POST` | `/api/v1/organizations/{id}/projects` | Create workspace project | Org Member |
-| **Proj** | `GET` | `/api/v1/organizations/{id}/organizations/{id}/projects` | List organization projects | Org Member |
+| **Proj** | `GET` | `/api/v1/organizations/{id}/projects` | List organization projects | Org Member |
 | **Proj** | `GET` | `/api/v1/projects/{id}` | Read project details | Org Member |
 | **Proj** | `PUT` | `/api/v1/projects/{id}` | Update project metadata | Org Member |
 | **Proj** | `PATCH`| `/api/v1/projects/{id}/archive` | Archive workspace project | Org `ADMIN` |
