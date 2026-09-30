@@ -65,6 +65,7 @@ PORT=8080
 DATABASE_URL=postgres://user:password@localhost:5432/db_name
 JWT_SECRET=your_super_secret_key
 JWT_REFRESH_SECRET=your_refresh_secret_key
+```
 
 ##Instalation and execution:
 # Clone the repository
