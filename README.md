@@ -67,17 +67,17 @@ JWT_SECRET=your_super_secret_key
 JWT_REFRESH_SECRET=your_refresh_secret_key
 ```
 
-##Instalation and execution:
-# Clone the repository
+## Instalation and execution:
+### Clone the repository
 git clone [https://github.com/your-username/enterprise-task-api.git](https://github.com/your-username/enterprise-task-api.git)
 
-# Navigate to project directory
+### Navigate to project directory
 cd enterprise-task-api
-# Install dependencies
+### Install dependencies
 npm install # or maven/gradle/go mod depending on your stack
-# Run migrations (if applicable)
+### Run migrations (if applicable)
 npm run migrate
-# Start the application
+### Start the application
 npm run dev
 
 
