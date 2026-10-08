@@ -7,7 +7,7 @@ This document details the physical and virtual infrastructure topology of the mu
 ## 1. Introduction and Purpose
 The Deployment View defines the hardware and containerized environment required to execute the system securely, scalably, and with high availability. It bridges the gap between software components and physical or cloud infrastructure.
 
-> **Visual Diagrams Reference:** The deployment topology is modeled in StarUML [DP-01-Deployment-Topology](docs/assets/DP-01-Deployment-Topology.jpg).
+> **Visual Diagrams Reference:** The deployment topology is modeled in StarUML [DP-01-Deployment-Topology](../assets/DP-01-Deployment-Topology.jpg).
 
 ---
 

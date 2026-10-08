@@ -7,7 +7,7 @@ This document details the dynamic behavior, concurrency, thread synchronization,
 ## 1. Introduction and Purpose
 While the Logical View addresses the static structure of the code, the Process View focuses on runtime execution. It illustrates how components collaborate to handle critical operations, ensuring transactional integrity, strict state machine enforcement, and robust security validation across boundaries.
 
-> **Visual Diagrams Reference:** The dynamic sequence diagrams for this process are modeled in StarUML [PR-01-Task-State-Transition](docs/assets/PR-01-Task-State-Transition.jpg).
+> **Visual Diagrams Reference:** The dynamic sequence diagrams for this process are modeled in StarUML [PR-01-Task-State-Transition](../assets/PR-01-Task-State-Transition.jpg).
 
 ---
 
