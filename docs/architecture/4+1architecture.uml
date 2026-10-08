@@ -167,7 +167,7 @@
 <XPD:OBJ name="NameCompartment" type="UMLNameCompartmentView" guid="lbObuYTQg0ueMI/iI/VejgAA">
 <XPD:OBJ name="NameLabel" type="LabelView" guid="WbeYFGQduUiiXEw0hXYzpwAA">
 <XPD:ATTR name="FontStyle" type="integer">1</XPD:ATTR>
-<XPD:ATTR name="Text" type="string">Rotate Access Token</XPD:ATTR>
+<XPD:ATTR name="Text" type="string">Rotate Refresh Token</XPD:ATTR>
 </XPD:OBJ>
 <XPD:OBJ name="StereotypeLabel" type="LabelView" guid="bunCRAvMdEmaDQFEnyv7dAAA">
 <XPD:ATTR name="Visible" type="boolean">False</XPD:ATTR>
@@ -266,7 +266,7 @@
 <XPD:OBJ name="NameCompartment" type="UMLNameCompartmentView" guid="Nuku1/tzOU2b851Q0zA1qgAA">
 <XPD:OBJ name="NameLabel" type="LabelView" guid="sajGVH8GMEe8I0+/c/qfKwAA">
 <XPD:ATTR name="FontStyle" type="integer">1</XPD:ATTR>
-<XPD:ATTR name="Text" type="string">Delete Account</XPD:ATTR>
+<XPD:ATTR name="Text" type="string">Deactivate User Account</XPD:ATTR>
 </XPD:OBJ>
 <XPD:OBJ name="StereotypeLabel" type="LabelView" guid="xedN86i1rkCj2T8tE5sgSQAA">
 <XPD:ATTR name="Visible" type="boolean">False</XPD:ATTR>
@@ -4195,7 +4195,7 @@
 <XPD:REF name="Associations[0]">4ZaNBBmHrU6dESEKpKQ98AAA</XPD:REF>
 </XPD:OBJ>
 <XPD:OBJ name="OwnedElements[4]" type="UMLUseCase" guid="ekDtPIQ/6UaZCD1/Y+KYswAA">
-<XPD:ATTR name="Name" type="string">Rotate Access Token</XPD:ATTR>
+<XPD:ATTR name="Name" type="string">Rotate Refresh Token</XPD:ATTR>
 <XPD:REF name="Namespace">EQb3CpYCykOBm2FvTAJWkgAA</XPD:REF>
 <XPD:ATTR name="#Views" type="integer">4</XPD:ATTR>
 <XPD:REF name="Views[0]">QjJwm3X75E+CIDHxyfkUdAAA</XPD:REF>
@@ -4228,7 +4228,7 @@
 <XPD:REF name="Associations[0]">N6eCKpmzfEKC8QBG5jHldgAA</XPD:REF>
 </XPD:OBJ>
 <XPD:OBJ name="OwnedElements[7]" type="UMLUseCase" guid="efaaGd+0A0GjVF/xj2/tZgAA">
-<XPD:ATTR name="Name" type="string">Delete Account</XPD:ATTR>
+<XPD:ATTR name="Name" type="string">Deactivate User Account</XPD:ATTR>
 <XPD:REF name="Namespace">EQb3CpYCykOBm2FvTAJWkgAA</XPD:REF>
 <XPD:ATTR name="#Views" type="integer">4</XPD:ATTR>
 <XPD:REF name="Views[0]">kZlVx54HA027bAeW5DDL7QAA</XPD:REF>

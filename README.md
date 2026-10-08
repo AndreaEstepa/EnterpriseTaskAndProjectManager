@@ -1,88 +1,191 @@
-# EnterpriseTaskAndProjectManager
-A robust, multi-tenant RESTful API built for scalable project management, featuring strict Role-Based Access Control (RBAC), domain-driven state machine task lifecycles, and isolated workspace structures.
+# Enterprise Task & Project Manager
+
+Enterprise Task & Project Manager is a multi-tenant B2B SaaS backend for organizing companies, workspaces, projects, tasks, assignments, and team comments. The product aims to provide secure tenant isolation, strict role-based access control, a governed task lifecycle, and deterministic API behavior.
+
+> **Status:** This repository currently contains the product specification, domain model, architecture documentation, and diagrams. The application source code is not implemented yet.
 
 ---
 
-## Key Features
-* **Multi-Tenant Organizations:** Secure tenant containers with isolated data boundaries.
-* **Granular RBAC:** Role-based permissions (`ADMIN` vs. `MEMBER`) enforced at the organization and project levels.
-* **Workspace Project Management:** Create, update, filter, and archive project spaces.
-* **Strict State Machine Tasks:** Controlled lifecycle transitions (`BACKLOG` > `TODO` > `IN_PROGRESS` > `IN_REVIEW` > `DONE`) preventing arbitrary status jumps.
-* **Team Collaboration:** Threaded task comments with author-based or admin-level deletion safeguards.
-* **Secure IAM:** JWT-based authentication with access token rotation and secure password hashing.
+## Product Vision
+
+The system will expose a stateless REST API that supports:
+
+- Multi-tenant organizations with strict isolation.
+- Organization membership and role management.
+- Project workspaces with lifecycle states.
+- Task creation, filtering, assignment, and governed state transitions.
+- Task comments with author and administrator authorization rules.
+- Authentication using JWT access and refresh tokens.
+- Secure account deactivation without permanent data loss.
+- Deterministic persistence through Flyway migrations.
 
 ---
 
-## Tech Stack
-* **Language/Framework:** *(e.g., Node.js / Express, Spring Boot, or Go / Gin)*
-* **Database:** *(e.g., PostgreSQL with Flyway Migrations)*
-* **Authentication:** JSON Web Tokens (JWT) & bcrypt
+## Planned Technology Stack
+
+The implementation will use the following technologies:
+
+- **Language:** Java
+- **Runtime:** Spring Boot
+- **Security:** Spring Security with JWT
+- **Persistence:** Spring Data JPA and Hibernate
+- **Database:** PostgreSQL
+- **Database migrations:** Flyway
+- **Build system:** Maven
+- **Containerization:** Docker and Docker Compose
+- **API gateway:** Nginx or Spring Cloud Gateway
+- **Testing:** JUnit 5, Mockito and Testcontainers
+- **API format:** REST over JSON
+- **Error format:** RFC 7807 Problem Details
+
+The target architecture is Clean Architecture together with DDD and a ports-and-adapters boundary. The domain module must remain independent from framework dependencies.
 
 ---
 
-## API Endpoints Reference Matrix
-| Module | Method | Endpoint | Description | Auth / Security Rule |
-| :--- | :--- | :--- | :--- | :--- |
-| **IAM** | `POST` | `/api/v1/auth/register` | Register new user account | Public |
-| **IAM** | `POST` | `/api/v1/auth/login` | Authenticate & issue JWT | Public |
-| **IAM** | `POST` | `/api/v1/auth/refresh` | Rotate access tokens | Public (Valid Refresh Token) |
-| **IAM** | `GET` | `/api/v1/users/me` | Read authenticated profile | Authenticated |
-| **IAM** | `PUT` | `/api/v1/users/me` | Update authenticated profile | Authenticated |
-| **IAM** | `DELETE`| `/api/v1/users/me` | Delete account | Authenticated |
-| **Org** | `POST` | `/api/v1/organizations` | Create tenant organization | Authenticated |
-| **Org** | `GET` | `/api/v1/organizations` | List user organizations | Authenticated |
-| **Org** | `GET` | `/api/v1/organizations/{id}`| Read organization details | Org Member |
-| **Org** | `PUT` | `/api/v1/organizations/{id}`| Update organization meta | Org `ADMIN` |
-| **Org** | `DELETE`| `/api/v1/organizations/{id}`| Delete organization container| Org `ADMIN` |
-| **Org** | `POST` | `/api/v1/organizations/{id}/members` | Add organization member | Org `ADMIN` |
-| **Org** | `PUT` | `/api/v1/organizations/{id}/members/{uId}` | Update member role | Org `ADMIN` |
-| **Org** | `DELETE`| `/api/v1/organizations/{id}/members/{uId}` | Remove organization member | Org `ADMIN` |
-| **Proj** | `POST` | `/api/v1/organizations/{id}/projects` | Create workspace project | Org Member |
-| **Proj** | `GET` | `/api/v1/organizations/{id}/projects` | List organization projects | Org Member |
-| **Proj** | `GET` | `/api/v1/projects/{id}` | Read project details | Org Member |
-| **Proj** | `PUT` | `/api/v1/projects/{id}` | Update project metadata | Org Member |
-| **Proj** | `PATCH`| `/api/v1/projects/{id}/archive` | Archive workspace project | Org `ADMIN` |
-| **Proj** | `DELETE`| `/api/v1/projects/{id}` | Delete project permanently | Org `ADMIN` |
-| **Task** | `POST` | `/api/v1/projects/{id}/tasks` | Create project task | Org Member |
-| **Task** | `GET` | `/api/v1/projects/{id}/tasks` | List/Filter project tasks | Org Member |
-| **Task** | `GET` | `/api/v1/tasks/{id}` | Read specific task details | Org Member |
-| **Task** | `PUT` | `/api/v1/tasks/{id}` | Update general task fields | Org Member |
-| **Task** | `PATCH`| `/api/v1/tasks/{id}/status` | Execute state machine shift | Org Member |
-| **Task** | `DELETE`| `/api/v1/tasks/{id}` | Delete task permanently | Org `ADMIN` or Author |
-| **Comm** | `POST` | `/api/v1/tasks/{id}/comments` | Post task comment | Org Member |
-| **Comm** | `GET` | `/api/v1/tasks/{id}/comments` | List task comments | Org Member |
-| **Comm** | `DELETE`| `/api/v1/comments/{id}` | Delete task comment | Comment Author / Org `ADMIN` |
+## Architecture Principles
+
+- **Domain isolation:** Business rules and aggregates must not depend on Spring, JPA, HTTP, or other infrastructure frameworks.
+- **Application use cases:** Business workflows must be represented as explicit use cases and transactions.
+- **Infrastructure adapters:** Controllers, repositories, security filters, persistence mappings and external integrations must be isolated in infrastructure modules.
+- **Tenant isolation:** Every organization, project, task and membership operation must enforce the current authenticated user's tenant context.
+- **Least privilege:** Every operation must require the minimum role and resource scope needed.
+- **Immutable audit data:** Deactivation and deletion behavior must preserve required historical information.
+- **Deterministic deployment:** Schema changes must be controlled through Flyway migrations.
 
 ---
 
-## Getting Started
-### Prerequisites
-* Ensure you have your database instance running and environment variables configured.
-### Environment Variables
-Create a `.env` file in the root directory:
-```env
-PORT=8080
-DATABASE_URL=postgres://user:password@localhost:5432/db_name
-JWT_SECRET=your_super_secret_key
-JWT_REFRESH_SECRET=your_refresh_secret_key
+## Organization Name Policy
+
+Organization names are **globally unique across the entire platform**.
+
+This means that no organization name may be duplicated between different companies or tenants, under any circumstances. A unique organization name is a global business identifier and must be enforced through a database-level uniqueness constraint.
+
+The organization name must therefore satisfy all of the following rules:
+
+1. It is required and between 2 and 100 characters.
+2. It is normalized before validation and comparison.
+3. It is unique globally, not only within a user or tenant.
+4. Duplicate values return `409 Conflict`.
+5. A changed name must also be checked against the global uniqueness rule.
+
+---
+
+## API Contract
+
+The API is versioned under `/api/v1` and uses semantic resource identifiers:
+
+- `{organizationId}` for organizations.
+- `{projectId}` for projects.
+- `{taskId}` for tasks.
+- `{userId}` for users.
+- `{commentId}` for comments.
+
+The API contract is documented in the [Product Requirements Document](docs/PRD.md).
+
+### API Endpoint Summary
+
+| Module | Method | Endpoint | Description | Authorization |
+|---|---|---|---|---|
+| IAM | `POST` | `/api/v1/auth/register` | Register a user | Public |
+| IAM | `POST` | `/api/v1/auth/login` | Authenticate and issue tokens | Public |
+| IAM | `POST` | `/api/v1/auth/refresh` | Rotate access and refresh tokens | Valid refresh token |
+| IAM | `GET` | `/api/v1/users/me` | Read the authenticated profile | Authenticated user |
+| IAM | `PUT` | `/api/v1/users/me` | Update the authenticated profile | Authenticated user |
+| IAM | `DELETE` | `/api/v1/users/me` | Deactivate the authenticated account | Account owner |
+| Organization | `POST` | `/api/v1/organizations` | Create an organization | Authenticated user |
+| Organization | `GET` | `/api/v1/organizations` | List organizations for the authenticated user | Authenticated user |
+| Organization | `GET` | `/api/v1/organizations/{organizationId}` | Read organization details | Active organization member |
+| Organization | `PUT` | `/api/v1/organizations/{organizationId}` | Update organization metadata | Organization `ADMIN` |
+| Organization | `DELETE` | `/api/v1/organizations/{organizationId}` | Delete an organization | Organization `ADMIN` |
+| Organization | `POST` | `/api/v1/organizations/{organizationId}/members` | Add an organization member | Organization `ADMIN` |
+| Organization | `PUT` | `/api/v1/organizations/{organizationId}/members/{userId}` | Update a member role | Organization `ADMIN` |
+| Organization | `DELETE` | `/api/v1/organizations/{organizationId}/members/{userId}` | Remove an organization member | Organization `ADMIN` |
+| Project | `POST` | `/api/v1/organizations/{organizationId}/projects` | Create a project | Active organization member |
+| Project | `GET` | `/api/v1/organizations/{organizationId}/projects` | List organization projects | Active organization member |
+| Project | `GET` | `/api/v1/projects/{projectId}` | Read project details | Active organization member |
+| Project | `PUT` | `/api/v1/projects/{projectId}` | Update project metadata | Project manager or organization `ADMIN` |
+| Project | `PATCH` | `/api/v1/projects/{projectId}/archive` | Archive a project | Organization `ADMIN` |
+| Project | `DELETE` | `/api/v1/projects/{projectId}` | Permanently delete a project | Organization `ADMIN` |
+| Task | `POST` | `/api/v1/projects/{projectId}/tasks` | Create a task | Active organization member |
+| Task | `GET` | `/api/v1/projects/{projectId}/tasks` | List and filter tasks | Active organization member |
+| Task | `GET` | `/api/v1/tasks/{taskId}` | Read task details | Active organization member |
+| Task | `PUT` | `/api/v1/tasks/{taskId}` | Update general task fields | Author or authorized project member |
+| Task | `PATCH` | `/api/v1/tasks/{taskId}/status` | Execute a task state transition | Authorized project member |
+| Task | `DELETE` | `/api/v1/tasks/{taskId}` | Permanently delete a task | Authorized project member or administrator |
+| Comment | `POST` | `/api/v1/tasks/{taskId}/comments` | Add a task comment | Active organization member |
+| Comment | `GET` | `/api/v1/tasks/{taskId}/comments` | List task comments | Active organization member |
+| Comment | `DELETE` | `/api/v1/comments/{commentId}` | Delete a comment | Comment author or organization `ADMIN` |
+
+---
+
+## Planned Project Structure
+
+The intended application structure is:
+
+```text
+src/
+├── domain/
+│   ├── model/
+│   ├── valueobject/
+│   ├── repository/
+│   ├── event/
+│   └── exception/
+├── application/
+│   ├── usecase/
+│   ├── dto/
+│   └── mapper/
+└── infrastructure/
+    ├── persistence/
+    ├── web/
+    ├── security/
+    └── event/
 ```
 
-## Instalation and execution:
-### Clone the repository
-git clone [https://github.com/your-username/enterprise-task-api.git](https://github.com/your-username/enterprise-task-api.git)
+The source tree and module structure are planned and are not yet present in the repository.
 
-### Navigate to project directory
-cd enterprise-task-api
-### Install dependencies
-npm install # or maven/gradle/go mod depending on your stack
-### Run migrations (if applicable)
-npm run migrate
-### Start the application
-npm run dev
+---
 
+## Local Development
 
-## Documentation
-For detailed business logic rules, data contracts, and error code structures, check out the full [Product Requirements Document](docs/PRD.md).
+The following commands are intended for the completed implementation. They must not be considered executable until the corresponding Maven modules and application configuration are added.
+
+```powershell
+# Clone the repository using its final Git URL after the project is published.
+mvn clean install
+mvn flyway:migrate
+mvn spring-boot:run
+```
+
+The application configuration must be supplied through environment variables or Spring configuration properties. Local development should use Docker Compose for PostgreSQL and optional application dependencies.
+
+---
+
+## Testing Strategy
+
+The implementation must include:
+
+- Unit tests for domain invariants and use cases.
+- Integration tests for Spring Data JPA repositories.
+- Security and authorization tests.
+- Real PostgreSQL integration tests through Testcontainers.
+- Migration validation.
+- API contract or controller tests.
+- A coverage target of at least 70%.
+
+---
+
+## Important Documentation
+
+- [Product requirements](docs/PRD.md)
+- [Architecture overview](docs/architecture/4+1-architecture.md)
+- [Domain model](docs/architecture/domain-model.md)
+- [Use cases](docs/architecture/use-cases.md)
+- [Logical view](docs/architecture/logical-view.md)
+- [Process view](docs/architecture/process-view.md)
+- [Deployment view](docs/architecture/deployment-view.md)
+
+---
 
 ## License
-Distributed under the MIT License. See [LICENSE](LICENSE.md) for more information.
+
+This project is distributed under the MIT License. See [LICENSE](LICENSE.md) for details.
