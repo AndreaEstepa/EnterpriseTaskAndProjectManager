@@ -7,7 +7,7 @@ This document details the static structure of the multi-tenant task management b
 ## 1. Introduction and Purpose
 The Logical View focuses on the key code abstractions and how the system is modularized to ensure loose coupling, high cohesion, and absolute testability. The design completely decouples business logic from infrastructure details (frameworks, persistence engines, and network protocols).
 
-> **Visual Diagrams Reference:** The corresponding diagrams for this view are modeled and structured in StarUML LD-01-Domain-Entities-Class-Diagram[docs/assets/LD-01-Domain-Entities-Class-Diagram].
+> **Visual Diagrams Reference:** The corresponding diagrams for this view are modeled and structured in StarUML [LD-01-Domain-Entities-Class-Diagram](docs/assets/LD-01-Domain-Entities-Class-Diagram).
 
 ---
 
@@ -54,4 +54,4 @@ Implements concrete technological details to connect the system with the outside
 
 ## 4. Canonical Pattern and Modular Scalability
 The architecture presented is designed around a **canonical pattern**. This means that the layer structure, adapters, and ports developed for the Tasks and Organizations subsystem are replicated symmetrically and strictly for the rest of the system's aggregates (`User`, `Organization`, `Project`, and `Comment`), ensuring a consistent development experience and predictable maintenance as the platform grows.
-The corresponding diagrams for this view are modeled and structured in StarUML LD-02-Clean-Architecture-Layers[docs/assets/LD-02-Clean-Architecture-Layers].
+The corresponding diagrams for this view are modeled and structured in StarUML [LD-02-Clean-Architecture-Layers](docs/assets/LD-02-Clean-Architecture-Layers).

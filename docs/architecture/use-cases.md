@@ -1,7 +1,7 @@
 # Use Cases Documentation (The "+1" View)
 This document details the functional use cases, actor interactions, and structural inheritance rules for the multi-tenant task management platform. It serves as the primary scenario driver for the 4+1 Architectural View Model.
 
-> **Visual Diagrams Reference:** The dynamic sequence diagrams for this process are modeled in StarUML UC-01-IAM-Security[docs/assets/UC-01-IAM-Security], UC-02-Organizations-RBAC[docs/assets/UC-02-Organizations-RBAC], UC-03-Projects-Tasks-Domain[docs/assets/UC-03-Projects-Tasks-Domain].
+> **Visual Diagrams Reference:** The dynamic sequence diagrams for this process are modeled in StarUML [UC-01-IAM-Security](docs/assets/UC-01-IAM-Security), [UC-02-Organizations-RBAC](docs/assets/UC-02-Organizations-RBAC), [UC-03-Projects-Tasks-Domai](docs/assets/UC-03-Projects-Tasks-Domain).
 
 ---
 
