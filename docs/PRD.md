@@ -1,10 +1,11 @@
 # Functional Specification & Product Requirements Document (PRD)
-# Enterprise Task & Project Manager (B2B SaaS Platform)
 
 ## 1. Executive Summary & System Overview
 The **Enterprise Task & Project Manager** is a robust, multi-tenant B2B SaaS platform engineered to streamline internal workflows, project tracking, and cross-functional team collaboration. 
 
-This document serves as the single source of truth for the system's architecture, functional workflows, and complete CRUD data contracts. The project implements strict **Domain-Driven Design (DDD)**, **Clean Architecture**, secure **JWT-based authentication**, **Role-Based Access Control (RBAC)**, and automated containerized integration testing using **Testcontainers**.
+This document serves as the single source of truth for the system's architecture, functional workflows, and complete CRUD data contracts. The project is intended to implement **Domain-Driven Design (DDD)**, **Clean Architecture**, secure **JWT-based authentication**, **Role-Based Access Control (RBAC)**, and automated containerized integration testing using **Testcontainers**.
+
+> **Status:** This PRD defines the intended product behavior and architecture. The implementation status of each requirement must be recorded separately during development.
 
 ---
 
@@ -14,6 +15,18 @@ The application is structured into a multi-layer **Clean Architecture** layout d
 *   **`domain`**: Pure business logic, aggregate roots, value objects, and domain events. Completely decoupled from frameworks (no Spring or JPA annotations).
 *   **`application`**: Use cases (application services) orchestrating business workflows and transaction boundaries.
 *   **`infrastructure`**: Framework-dependent layer housing Spring Boot components, Spring Data JPA repositories, REST controllers, security filters, and database configuration.
+
+### 2.1 Route Identifier Convention
+
+All route examples must use the following names consistently:
+
+- `{organizationId}` for an organization resource.
+- `{projectId}` for a project resource.
+- `{taskId}` for a task resource.
+- `{userId}` for a user resource.
+- `{commentId}` for a comment resource.
+
+This convention prevents the same resource from being represented with different identifiers such as `{id}`, `{orgId}`, or `{organizationId}`.
 
 ---
 
@@ -156,32 +169,27 @@ Responsible for user registration, profile management, credential lifecycle, and
         ```json
         {
           "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
-          "email": "john.doe@enterprise.com",
-          "fullName": "Jonathan Doe",
-          "status": "ACTIVE",
-          "updatedAt": "2026-06-06T12:30:00Z"
-        }
-        ```
+*   **RF-IAM-06: Deactivate User Account**
+    *   **Description:** Deactivates the authenticated user's account without permanently deleting its historical records. Deactivation must revoke all active sessions and prevent future authentication.
+    *   **HTTP Method & Endpoint:** `DELETE /api/v1/users/me`
+    *   **Security & Headers:** Requires a valid Bearer token in the `Authorization` header.
+    *   **Business Logic:**
+        *   The authenticated user must be the account owner.
+        *   The user's status becomes `INACTIVE`.
+        *   All active access and refresh tokens associated with the user are revoked.
+        *   The account remains available for administrative recovery or permanent deletion.
+    *   **Success Response (`204 No Content`):** Empty body.
+    *   **Error Handling Responses:**
+        *   `401 Unauthorized`: Missing, expired, or malformed JWT token.
+        *   `403 Forbidden`: The authenticated user is not the account owner.
+        *   `409 Conflict`: The account is already inactive.
+
+
+
     *   **Error Handling Responses:**
         *   `400 Bad Request`: Validation failure on input fields.
         *   `401 Unauthorized`: Missing or invalid authentication token.
 
-
-
-        
-*   **RF-IAM-06: Token Rotation & Refresh Mechanism** (`POST /api/v1/auth/refresh`)
-    *   **Description:** Generates a new cryptographically signed JWT Access Token and a rotated Refresh Token using a valid, non-expired refresh token. Implements strict token rotation policies to mitigate token theft and replay attacks.
-    *   **Input Data (JSON Request Body):**
-        *   `refreshToken`: String (JWT or opaque secure random token securely stored/hashed in the database).
-    *   **Processing Business Logic & Security Steps:**
-        1.  **Validation:** Verify the cryptographic signature and expiration of the incoming refresh token. If expired or malformed, reject immediately.
-        2.  **Database Lookup:** Query the persistent storage (`refresh_tokens` table) to check if the token exists, is active, and has not been revoked.
-        3.  **Replay Attack Detection (Security Safeguard):** 
-            *   If the token presented has *already* been used/rotated (i.e., marked as revoked or missing), this indicates a potential security breach (token theft). 
-            *   *Action:* Invalidate all active refresh tokens associated with that user ID immediately, forcing a global logout, and return `401 Unauthorized`.
-        4.  **Rotation Execution:** Revoke the currently used refresh token (mark it as `REVOKED` or delete it).
-        5.  **Issuance:** Generate a fresh JWT Access Token (short expiration, e.g., 15 minutes) and a brand-new Refresh Token (longer expiration, e.g., 7 days), persisting the new refresh token in the database linked to the user session.
-    *   **Success Response (`200 OK`):**
     
 
 ### 3.2 Module 2: Organizations & Memberships (Organization CRUD & RBAC)
@@ -219,7 +227,7 @@ Manages corporate structures, multi-tenant isolation, and fine-grained access co
     *   **Description:** Retrieves a list of all organizations associated with the currently authenticated user, or fetches detailed information and member lists for a specific organization ID.
     *   **HTTP Methods & Endpoints:** 
         *   List user organizations: `GET /api/v1/organizations`
-        *   Read specific organization detail: `GET /api/v1/organizations/{orgId}`
+        *   Read specific organization detail: `GET /api/v1/organizations/{organizationId}`
     *   **Security & Headers:** Requires a valid Bearer token.
     *   **Processing Business Logic:**
         *   For lists: Queries the database using the `organization_members` junction table to return only organizations where the user is an active member.
@@ -261,7 +269,7 @@ Manages corporate structures, multi-tenant isolation, and fine-grained access co
 
 *   **RF-ORG-03: Update Organization Details (Update)**
     *   **Description:** Modifies general organization metadata (such as its corporate name).
-    *   **HTTP Method & Endpoint:** `PUT /api/v1/organizations/{orgId}`
+    *   **HTTP Method & Endpoint:** `PUT /api/v1/organizations/{organizationId}`
     *   **Security & Headers:** Requires a valid Bearer token.
     *   **Request Body (JSON):**
         ```json
@@ -270,7 +278,7 @@ Manages corporate structures, multi-tenant isolation, and fine-grained access co
         }
         ```
     *   **Validation Rules & Security Checks:**
-        *   **RBAC Enforcement:** The security layer must verify that the authenticated user possesses the `ADMIN` role within the target `{orgId}`. If the user is a regular `MEMBER`, throw an authorization exception.
+        *   **RBAC Enforcement:** The security layer must verify that the authenticated user possesses the `ADMIN` role within the target `{organizationId}`. If the user is a regular `MEMBER`, throw an authorization exception.
         *   `name`: Required, 2 to 100 characters.
     *   **Success Response (`200 OK`):**
         ```json
@@ -290,7 +298,7 @@ Manages corporate structures, multi-tenant isolation, and fine-grained access co
 
 *   **RF-ORG-04: Delete Organization (Delete)**
     *   **Description:** Permanently deletes an organization tenant container, enforcing cascading deletion across all associated projects, tasks, and membership relations.
-    *   **HTTP Method & Endpoint:** `DELETE /api/v1/organizations/{orgId}`
+    *   **HTTP Method & Endpoint:** `DELETE /api/v1/organizations/{organizationId}`
     *   **Security & Headers:** Requires a valid Bearer token.
     *   **Security & Business Logic Checks:**
         *   **RBAC Enforcement:** Restricted strictly to organization `ADMIN`.
@@ -305,7 +313,7 @@ Manages corporate structures, multi-tenant isolation, and fine-grained access co
 
 *   **RF-ORG-05: Add Organization Member (Membership Create)**
     *   **Description:** Invites or associates an existing platform user to the organization, assigning a specific corporate role.
-    *   **HTTP Method & Endpoint:** `POST /api/v1/organizations/{orgId}/members`
+    *   **HTTP Method & Endpoint:** `POST /api/v1/organizations/{organizationId}/members`
     *   **Security & Headers:** Requires a valid Bearer token.
     *   **Request Body (JSON):**
         ```json
@@ -334,9 +342,32 @@ Manages corporate structures, multi-tenant isolation, and fine-grained access co
         *   `404 Not Found`: Organization or target user does not exist.
 
 
-*   **RF-ORG-06: Remove Organization Member (Membership Delete)**
+*   **RF-ORG-06: Update Organization Member Role**
+    *   **Description:** Changes the role assigned to an existing member within an organization.
+    *   **HTTP Method & Endpoint:** `PUT /api/v1/organizations/{organizationId}/members/{userId}`
+    *   **Security & Headers:** Requires a valid Bearer token.
+    *   **Request Body (JSON):**
+        ```json
+        {
+          "role": "ADMIN"
+        }
+        ```
+    *   **Validation Rules & Security Checks:**
+        *   The caller must have the `ADMIN` role in the target organization.
+        *   The requested role must be either `ADMIN` or `MEMBER`.
+        *   The target user must have an active membership in the organization.
+        *   The caller cannot remove their own administrative role unless another administrator remains.
+    *   **Success Response (`200 OK`):** Returns the updated membership information.
+    *   **Error Handling Responses:**
+        *   `400 Bad Request`: Invalid role or unsupported role transition.
+        *   `401 Unauthorized`: Missing or invalid token.
+        *   `403 Forbidden`: Caller lacks `ADMIN` rights or cannot perform the requested role change.
+        *   `404 Not Found`: Organization or membership does not exist.
+
+
+*   **RF-ORG-07: Remove Organization Member (Membership Delete)**
     *   **Description:** Revokes a user's access by removing them from the organization's membership list.
-    *   **HTTP Method & Endpoint:** `DELETE /api/v1/organizations/{orgId}/members/{userId}`
+    *   **HTTP Method & Endpoint:** `DELETE /api/v1/organizations/{organizationId}/members/{userId}`
     *   **Security & Business Logic Checks:**
         *   **RBAC Enforcement:** Caller must have the `ADMIN` role.
         *   **Business Safeguard:** An organization cannot be left with zero administrators. If attempting to remove the last remaining `ADMIN`, throw a domain validation exception (`400 Bad Request`).
@@ -353,7 +384,7 @@ Manages isolated workspaces and collaborative project containers within specific
 
 *   **RF-PROJ-01: Create Project (Create)**
     *   **Description:** Creates a new workspace project tied to a specific organization. The project is initialized with an `ACTIVE` status.
-    *   **HTTP Method & Endpoint:** `POST /api/v1/organizations/{orgId}/projects`
+    *   **HTTP Method & Endpoint:** `POST /api/v1/organizations/{organizationId}/projects`
     *   **Security & Headers:** Requires a valid Bearer token (`Authorization: Bearer <accessToken>`).
     *   **Request Body (JSON):**
         ```json
@@ -363,7 +394,7 @@ Manages isolated workspaces and collaborative project containers within specific
         }
         ```
     *   **Validation Rules & Security Checks:**
-        *   **Tenant Membership Check:** The authenticated user must be an active member of the target `{orgId}`. If not, throw `403 Forbidden`.
+        *   **Tenant Membership Check:** The authenticated user must be an active member of the target `{organizationId}`. If not, throw `403 Forbidden`.
         *   `name`: Required, between 2 and 100 characters. Must be unique within the organization context.
         *   `description`: Optional, maximum 500 characters.
         *   **Processing:** Persists the `Project` entity linking it to the `organizationId` with an initial status value of `ACTIVE`.
@@ -390,7 +421,7 @@ Manages isolated workspaces and collaborative project containers within specific
 *   **RF-PROJ-02: Read Projects & Details (Read / List & Detail)**
     *   **Description:** Lists all workspace projects contained inside a specific organization, or fetches detailed information for a single project ID.
     *   **HTTP Methods & Endpoints:**
-        *   List organization projects: `GET /api/v1/organizations/{orgId}/projects`
+        *   List organization projects: `GET /api/v1/organizations/{organizationId}/projects`
         *   Read specific project detail: `GET /api/v1/projects/{projectId}`
     *   **Security & Headers:** Requires a valid Bearer token.
     *   **Processing Business Logic:**
@@ -751,27 +782,27 @@ Handles internal team collaboration, threaded discussions, and note-taking assoc
 | **IAM** | `POST` | `/api/v1/auth/refresh` | Rotate access tokens | Public (Valid Refresh Token) |
 | **IAM** | `GET` | `/api/v1/users/me` | Read authenticated profile | Authenticated |
 | **IAM** | `PUT` | `/api/v1/users/me` | Update authenticated profile | Authenticated |
-| **IAM** | `DELETE`| `/api/v1/users/me` | Delete account | Authenticated |
+| **IAM** | `DELETE`| `/api/v1/users/me` | Deactivate user account | Authenticated |
 | **Org** | `POST` | `/api/v1/organizations` | Create tenant organization | Authenticated |
 | **Org** | `GET` | `/api/v1/organizations` | List user organizations | Authenticated |
-| **Org** | `GET` | `/api/v1/organizations/{id}`| Read organization details | Org Member |
-| **Org** | `PUT` | `/api/v1/organizations/{id}`| Update organization meta | Org `ADMIN` |
-| **Org** | `DELETE`| `/api/v1/organizations/{id}`| Delete organization container| Org `ADMIN` |
-| **Org** | `POST` | `/api/v1/organizations/{id}/members` | Add organization member | Org `ADMIN` |
-| **Org** | `PUT` | `/api/v1/organizations/{id}/members/{uId}` | Update member role | Org `ADMIN` |
-| **Org** | `DELETE`| `/api/v1/organizations/{id}/members/{uId}` | Remove organization member | Org `ADMIN` |
-| **Proj** | `POST` | `/api/v1/organizations/{id}/projects` | Create workspace project | Org Member |
-| **Proj** | `GET` | `/api/v1/organizations/{id}/projects` | List organization projects | Org Member |
-| **Proj** | `GET` | `/api/v1/projects/{id}` | Read project details | Org Member |
-| **Proj** | `PUT` | `/api/v1/projects/{id}` | Update project metadata | Org Member |
-| **Proj** | `PATCH`| `/api/v1/projects/{id}/archive` | Archive workspace project | Org `ADMIN` |
-| **Proj** | `DELETE`| `/api/v1/projects/{id}` | Delete project permanently | Org `ADMIN` |
-| **Task** | `POST` | `/api/v1/projects/{id}/tasks` | Create project task | Org Member |
-| **Task** | `GET` | `/api/v1/projects/{id}/tasks` | List/Filter project tasks | Org Member |
-| **Task** | `GET` | `/api/v1/tasks/{id}` | Read specific task details | Org Member |
-| **Task** | `PUT` | `/api/v1/tasks/{id}` | Update general task fields | Org Member |
-| **Task** | `PATCH`| `/api/v1/tasks/{id}/status` | Execute state machine shift | Org Member |
-| **Task** | `DELETE`| `/api/v1/tasks/{id}` | Delete task permanently | Org `ADMIN` or Author |
-| **Comm** | `POST` | `/api/v1/tasks/{id}/comments` | Post task comment | Org Member |
-| **Comm** | `GET` | `/api/v1/tasks/{id}/comments` | List task comments | Org Member |
-| **Comm** | `DELETE`| `/api/v1/comments/{id}` | Delete task comment | Comment Author / Org `ADMIN` |
+| **Org** | `GET` | `/api/v1/organizations/{organizationId}`| Read organization details | Org Member |
+| **Org** | `PUT` | `/api/v1/organizations/{organizationId}`| Update organization meta | Org `ADMIN` |
+| **Org** | `DELETE`| `/api/v1/organizations/{organizationId}`| Delete organization container| Org `ADMIN` |
+| **Org** | `POST` | `/api/v1/organizations/{organizationId}/members` | Add organization member | Org `ADMIN` |
+| **Org** | `PUT` | `/api/v1/organizations/{organizationId}/members/{userId}` | Update member role | Org `ADMIN` |
+| **Org** | `DELETE`| `/api/v1/organizations/{organizationId}/members/{userId}` | Remove organization member | Org `ADMIN` |
+| **Proj** | `POST` | `/api/v1/organizations/{organizationId}/projects` | Create workspace project | Org Member |
+| **Proj** | `GET` | `/api/v1/organizations/{organizationId}/projects` | List organization projects | Org Member |
+| **Proj** | `GET` | `/api/v1/projects/{projectId}` | Read project details | Org Member |
+| **Proj** | `PUT` | `/api/v1/projects/{projectId}` | Update project metadata | Org Member |
+| **Proj** | `PATCH`| `/api/v1/projects/{projectId}/archive` | Archive workspace project | Org `ADMIN` |
+| **Proj** | `DELETE`| `/api/v1/projects/{projectId}` | Delete project permanently | Org `ADMIN` |
+| **Task** | `POST` | `/api/v1/projects/{projectId}/tasks` | Create project task | Org Member |
+| **Task** | `GET` | `/api/v1/projects/{projectId}/tasks` | List/Filter project tasks | Org Member |
+| **Task** | `GET` | `/api/v1/tasks/{taskId}` | Read specific task details | Org Member |
+| **Task** | `PUT` | `/api/v1/tasks/{taskId}` | Update general task fields | Org Member |
+| **Task** | `PATCH`| `/api/v1/tasks/{taskId}/status` | Execute state machine shift | Org Member |
+| **Task** | `DELETE`| `/api/v1/tasks/{taskId}` | Delete task permanently | Org `ADMIN` or Author |
+| **Comm** | `POST` | `/api/v1/tasks/{taskId}/comments` | Post task comment | Org Member |
+| **Comm** | `GET` | `/api/v1/tasks/{taskId}/comments` | List task comments | Org Member |
+| **Comm** | `DELETE`| `/api/v1/comments/{commentId}` | Delete task comment | Comment Author / Org `ADMIN` |

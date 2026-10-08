@@ -16,7 +16,7 @@ The primary core workflow of the platform involves modifying a task's lifecycle 
 
 ### 2.1. Step-by-Step Runtime Execution Flow
 1. **HTTP Request & Security Interception:**
-   - The `Client` issues a `PATCH /api/v1/tasks/{id}/status` HTTP request carrying a Bearer JWT.
+   - The `Client` issues a `PATCH /api/v1/tasks/{taskId}/status` HTTP request carrying a Bearer JWT.
    - The `JwtTokenFilter` (Infrastructure) intercepts the request, validates the cryptographic signature, and populates the Security Context.
 2. **Web Controller Delegation:**
    - The request reaches the `TaskController`, which maps the incoming payload into an application-level command/request object and invokes the interactor.
