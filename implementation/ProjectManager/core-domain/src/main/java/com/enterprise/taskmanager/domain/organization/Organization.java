@@ -29,6 +29,10 @@ public final class Organization {
         return new Organization(id, new OrganizationName(name), now, now);
     }
 
+    public static Organization restore(UUID id, String name, Instant createdAt, Instant updatedAt) {
+        return new Organization(id, new OrganizationName(name), createdAt, updatedAt);
+    }
+
     public Organization rename(String newName, Instant now) {
         Objects.requireNonNull(now, "Current time must not be null");
         if (now.isBefore(updatedAt)) {

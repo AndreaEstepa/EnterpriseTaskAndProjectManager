@@ -146,10 +146,10 @@ Run Maven commands from the implementation root:
 ```powershell
 cd implementation\ProjectManager
 mvn clean install
-mvn -pl app-bootstrap -am spring-boot:run
+mvn -pl app-bootstrap spring-boot:run
 ```
 
-The application configuration must be supplied through environment variables or Spring configuration properties. Local development should use Docker Compose for PostgreSQL and optional application dependencies. Flyway migrations run through the application configuration when the database is configured.
+The application reads `DB_PASSWORD` and `JWT_SECRET` from the environment. Set both in the IntelliJ run configuration for `TaskManagerApplication`; `JWT_SECRET` must be Base64 encoding of at least 32 random bytes. Local development should use Docker Compose for PostgreSQL and optional application dependencies. Flyway migrations run through the application configuration when the database is configured.
 
 Database migrations live in `infrastructure-adapter/src/main/resources/db/migration/` and use Flyway's versioned naming convention, for example `V1__create_initial_schema.sql`. They are applied automatically when `app-bootstrap` starts.
 

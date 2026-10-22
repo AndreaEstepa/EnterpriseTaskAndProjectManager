@@ -47,7 +47,7 @@ Responsible for user registration, profile management, credential lifecycle, and
         ```
     *   **Validation Rules & Business Logic:**
         *   `email`: Must be a valid email format, unique across the database, and max 255 characters.
-        *   `password`: Minimum 8 characters, must contain at least one uppercase letter, one lowercase letter, one number, and one special character.
+        *   `password`: 8 to 72 UTF-8 bytes, must contain at least one uppercase letter, one lowercase letter, one number, and one special character.
         *   `fullName`: Between 2 and 100 characters.
         *   **Processing:** The raw password must be securely hashed using `BCryptPasswordEncoder` (with a strength factor of 12) before persisting the `User` entity. The initial account status is set to `ACTIVE`.
     *   **Success Response (`201 Created`):**

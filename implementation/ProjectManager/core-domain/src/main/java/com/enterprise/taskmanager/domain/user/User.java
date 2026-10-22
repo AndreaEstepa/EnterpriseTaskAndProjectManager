@@ -42,6 +42,17 @@ public final class User {
         return new User(id, new Email(email), fullName, passwordHash, UserStatus.ACTIVE, now, now);
     }
 
+    public static User restore(
+            UUID id,
+            String email,
+            String fullName,
+            String passwordHash,
+            UserStatus status,
+            Instant createdAt,
+            Instant updatedAt) {
+        return new User(id, new Email(email), fullName, passwordHash, status, createdAt, updatedAt);
+    }
+
     public User updateFullName(String newFullName, Instant now) {
         Objects.requireNonNull(now, "Current time must not be null");
         ensureActive();
