@@ -11,7 +11,7 @@ This document serves as the single source of truth for the system's architecture
 
 ## 2. System Architecture & Technical Boundaries
 
-The application is structured into a multi-layer **Clean Architecture** layout divided into distinct Maven/Gradle modules:
+The application is structured into a multi-layer **Clean Architecture** layout divided into distinct Maven modules and targets Java 21:
 *   **`domain`**: Pure business logic, aggregate roots, value objects, and domain events. Completely decoupled from frameworks (no Spring or JPA annotations).
 *   **`application`**: Use cases (application services) orchestrating business workflows and transaction boundaries.
 *   **`infrastructure`**: Framework-dependent layer housing Spring Boot components, Spring Data JPA repositories, REST controllers, security filters, and database configuration.
@@ -129,7 +129,7 @@ Responsible for user registration, profile management, credential lifecycle, and
 *   **RF-IAM-04: Read User Profile**
     *   **Description:** Retrieves profile details of the currently authenticated user based on the security context established by the incoming JWT.
     *   **HTTP Method & Endpoint:** `GET /api/v1/users/me`
-    *   **Security & Headers:** Requires a valid Bearer token in the `Authorization` header (`Authorization: Bearer <accessToken>`).
+*   **Security & Headers:** Requires a valid JWT access token in the `Authorization: Bearer <access-token>` header.
     *   **Processing Business Logic:**
         *   Extracts the user identifier (UUID or email) from the validated JWT claims.
         *   Queries the persistence layer to fetch current profile attributes.
@@ -154,7 +154,7 @@ Responsible for user registration, profile management, credential lifecycle, and
 *   **RF-IAM-05: Update User Profile**
     *   **Description:** Updates modifiable profile attributes (such as full name) for the currently authenticated user.
     *   **HTTP Method & Endpoint:** `PUT /api/v1/users/me`
-    *   **Security & Headers:** Requires a valid Bearer token.
+*   **Security & Headers:** Requires a valid JWT access token in the `Authorization: Bearer <access-token>` header.
     *   **Request Body (JSON):**
         ```json
         {
@@ -172,7 +172,7 @@ Responsible for user registration, profile management, credential lifecycle, and
 *   **RF-IAM-06: Deactivate User Account**
     *   **Description:** Deactivates the authenticated user's account without permanently deleting its historical records. Deactivation must revoke all active sessions and prevent future authentication.
     *   **HTTP Method & Endpoint:** `DELETE /api/v1/users/me`
-    *   **Security & Headers:** Requires a valid Bearer token in the `Authorization` header.
+*   **Security & Headers:** Requires a valid JWT access token in the `Authorization: Bearer <access-token>` header.
     *   **Business Logic:**
         *   The authenticated user must be the account owner.
         *   The user's status becomes `INACTIVE`.
@@ -198,7 +198,7 @@ Manages corporate structures, multi-tenant isolation, and fine-grained access co
 *   **RF-ORG-01: Create Organization (Create)**
     *   **Description:** Creates a new corporate tenant container and automatically assigns the creator as an `ADMIN` within the organization's membership mapping table.
     *   **HTTP Method & Endpoint:** `POST /api/v1/organizations`
-    *   **Security & Headers:** Requires a valid Bearer token (`Authorization: Bearer <accessToken>`).
+*   **Security & Headers:** Requires a valid JWT access token in the `Authorization: Bearer <access-token>` header.
     *   **Request Body (JSON):**
         ```json
         {
@@ -206,7 +206,7 @@ Manages corporate structures, multi-tenant isolation, and fine-grained access co
         }
         ```
     *   **Validation Rules & Business Logic:**
-        *   `name`: String, required, between 2 and 100 characters. Must be unique for the user or globally unique according to system policy.
+        *   `name`: Required, between 2 and 100 characters. Must be normalized and globally unique across the entire platform. Enforce uniqueness with a database-level constraint.
         *   **Processing:** Persists the `Organization` entity. Instantiates a mapping entry in the junction table `organization_members` linking the authenticated user ID to the new organization ID with the role `ADMIN`.
     *   **Success Response (`201 Created`):**
         ```json
@@ -228,7 +228,7 @@ Manages corporate structures, multi-tenant isolation, and fine-grained access co
     *   **HTTP Methods & Endpoints:** 
         *   List user organizations: `GET /api/v1/organizations`
         *   Read specific organization detail: `GET /api/v1/organizations/{organizationId}`
-    *   **Security & Headers:** Requires a valid Bearer token.
+*   **Security & Headers:** Requires a valid JWT access token in the `Authorization: Bearer <access-token>` header.
     *   **Processing Business Logic:**
         *   For lists: Queries the database using the `organization_members` junction table to return only organizations where the user is an active member.
         *   For details: Validates that the requesting user belongs to the target organization (`orgId`). If not, rejects access.
@@ -270,7 +270,7 @@ Manages corporate structures, multi-tenant isolation, and fine-grained access co
 *   **RF-ORG-03: Update Organization Details (Update)**
     *   **Description:** Modifies general organization metadata (such as its corporate name).
     *   **HTTP Method & Endpoint:** `PUT /api/v1/organizations/{organizationId}`
-    *   **Security & Headers:** Requires a valid Bearer token.
+*   **Security & Headers:** Requires a valid JWT access token in the `Authorization: Bearer <access-token>` header.
     *   **Request Body (JSON):**
         ```json
         {
@@ -279,7 +279,7 @@ Manages corporate structures, multi-tenant isolation, and fine-grained access co
         ```
     *   **Validation Rules & Security Checks:**
         *   **RBAC Enforcement:** The security layer must verify that the authenticated user possesses the `ADMIN` role within the target `{organizationId}`. If the user is a regular `MEMBER`, throw an authorization exception.
-        *   `name`: Required, 2 to 100 characters.
+        *   `name`: Required, between 2 and 100 characters. Must remain globally unique after normalization; a duplicate returns `409 Conflict`.
     *   **Success Response (`200 OK`):**
         ```json
         {
@@ -293,13 +293,14 @@ Manages corporate structures, multi-tenant isolation, and fine-grained access co
         *   `401 Unauthorized`: Missing or invalid token.
         *   `403 Forbidden`: User is a standard member and lacks `ADMIN` privileges.
         *   `404 Not Found`: Organization does not exist.
+        *   `409 Conflict`: The normalized organization name is already used by another organization.
 
 
 
 *   **RF-ORG-04: Delete Organization (Delete)**
     *   **Description:** Permanently deletes an organization tenant container, enforcing cascading deletion across all associated projects, tasks, and membership relations.
     *   **HTTP Method & Endpoint:** `DELETE /api/v1/organizations/{organizationId}`
-    *   **Security & Headers:** Requires a valid Bearer token.
+*   **Security & Headers:** Requires a valid JWT access token in the `Authorization: Bearer <access-token>` header.
     *   **Security & Business Logic Checks:**
         *   **RBAC Enforcement:** Restricted strictly to organization `ADMIN`.
         *   **Safety Safeguard:** Triggers database cascade or clean removal of dependent projects, tasks, comments, and membership records to prevent orphaned relational records.
@@ -314,7 +315,7 @@ Manages corporate structures, multi-tenant isolation, and fine-grained access co
 *   **RF-ORG-05: Add Organization Member (Membership Create)**
     *   **Description:** Invites or associates an existing platform user to the organization, assigning a specific corporate role.
     *   **HTTP Method & Endpoint:** `POST /api/v1/organizations/{organizationId}/members`
-    *   **Security & Headers:** Requires a valid Bearer token.
+*   **Security & Headers:** Requires a valid JWT access token in the `Authorization: Bearer <access-token>` header.
     *   **Request Body (JSON):**
         ```json
         {
@@ -345,7 +346,7 @@ Manages corporate structures, multi-tenant isolation, and fine-grained access co
 *   **RF-ORG-06: Update Organization Member Role**
     *   **Description:** Changes the role assigned to an existing member within an organization.
     *   **HTTP Method & Endpoint:** `PUT /api/v1/organizations/{organizationId}/members/{userId}`
-    *   **Security & Headers:** Requires a valid Bearer token.
+*   **Security & Headers:** Requires a valid JWT access token in the `Authorization: Bearer <access-token>` header.
     *   **Request Body (JSON):**
         ```json
         {
@@ -385,7 +386,7 @@ Manages isolated workspaces and collaborative project containers within specific
 *   **RF-PROJ-01: Create Project (Create)**
     *   **Description:** Creates a new workspace project tied to a specific organization. The project is initialized with an `ACTIVE` status.
     *   **HTTP Method & Endpoint:** `POST /api/v1/organizations/{organizationId}/projects`
-    *   **Security & Headers:** Requires a valid Bearer token (`Authorization: Bearer <accessToken>`).
+*   **Security & Headers:** Requires a valid JWT access token in the `Authorization: Bearer <access-token>` header.
     *   **Request Body (JSON):**
         ```json
         {
@@ -423,7 +424,7 @@ Manages isolated workspaces and collaborative project containers within specific
     *   **HTTP Methods & Endpoints:**
         *   List organization projects: `GET /api/v1/organizations/{organizationId}/projects`
         *   Read specific project detail: `GET /api/v1/projects/{projectId}`
-    *   **Security & Headers:** Requires a valid Bearer token.
+*   **Security & Headers:** Requires a valid JWT access token in the `Authorization: Bearer <access-token>` header.
     *   **Processing Business Logic:**
         *   Validates that the user is a member of the organization that owns the project.
         *   Supports basic listing of project metadata, status, and aggregate statistics (e.g., task counts).
@@ -460,7 +461,7 @@ Manages isolated workspaces and collaborative project containers within specific
 *   **RF-PROJ-03: Update Project Metadata (Update)**
     *   **Description:** Modifies a project's name or description details.
     *   **HTTP Method & Endpoint:** `PUT /api/v1/projects/{projectId}`
-    *   **Security & Headers:** Requires a valid Bearer token.
+*   **Security & Headers:** Requires a valid JWT access token in the `Authorization: Bearer <access-token>` header.
     *   **Request Body (JSON):**
         ```json
         {
@@ -469,7 +470,7 @@ Manages isolated workspaces and collaborative project containers within specific
         }
         ```
     *   **Validation Rules & Security Checks:**
-        *   **RBAC / Membership Check:** User must be an active member of the organization owning the project. (Can be further restricted to org `ADMIN` or project managers if business logic demands).
+        *   **RBAC Enforcement:** User must have the `ADMIN` role in the organization that owns the project.
         *   `name`: Required, 2 to 100 characters.
         *   **Business Rule Safeguard:** If the project status is `ARCHIVED`, updates are rejected (`400 Bad Request`), as archived projects are read-only.
     *   **Success Response (`200 OK`):**
@@ -494,7 +495,7 @@ Manages isolated workspaces and collaborative project containers within specific
 *   **RF-PROJ-04: Archive Project (Soft Delete / State Transition)**
     *   **Description:** Transitions a project's operational state to `ARCHIVED`, locking all contained tasks into read-only mode without permanently erasing historical data.
     *   **HTTP Method & Endpoint:** `PATCH /api/v1/projects/{projectId}/archive`
-    *   **Security & Headers:** Requires a valid Bearer token.
+*   **Security & Headers:** Requires a valid JWT access token in the `Authorization: Bearer <access-token>` header.
     *   **Security & Business Logic Checks:**
         *   **RBAC Enforcement:** Restricted strictly to organization `ADMIN` role.
         *   **State Check:** If already `ARCHIVED`, the operation is idempotent or returns a clean confirmation response.
@@ -531,7 +532,7 @@ The operational core handling workloads, task assignments, and strict lifecycle 
 *   **RF-TASK-01: Create Task (Create)**
     *   **Description:** Creates a task within a specific workspace project, initializing it strictly with the `BACKLOG` state.
     *   **HTTP Method & Endpoint:** `POST /api/v1/projects/{projectId}/tasks`
-    *   **Security & Headers:** Requires a valid Bearer token (`Authorization: Bearer <accessToken>`).
+*   **Security & Headers:** Requires a valid JWT access token in the `Authorization: Bearer <access-token>` header.
     *   **Request Body (JSON):**
         ```json
         {
@@ -572,7 +573,7 @@ The operational core handling workloads, task assignments, and strict lifecycle 
     *   **HTTP Methods & Endpoints:**
         *   List project tasks: `GET /api/v1/projects/{projectId}/tasks?status=BACKLOG&priority=HIGH&assigneeId=c333bb22-...`
         *   Read specific task detail: `GET /api/v1/tasks/{taskId}`
-    *   **Security & Headers:** Requires a valid Bearer token.
+*   **Security & Headers:** Requires a valid JWT access token in the `Authorization: Bearer <access-token>` header.
     *   **Processing Business Logic:**
         *   Validates organization membership for the requesting user.
         *   Supports dynamic filtering via optional query parameters (`status`, `priority`, `assigneeId`).
@@ -611,7 +612,7 @@ The operational core handling workloads, task assignments, and strict lifecycle 
 *   **RF-TASK-03: Update Task General Fields (Update)**
     *   **Description:** Updates core task descriptive attributes (title, description, priority, or assignee assignment). Note: Status updates are excluded from this endpoint and managed via the dedicated state machine endpoint.
     *   **HTTP Method & Endpoint:** `PUT /api/v1/tasks/{taskId}`
-    *   **Security & Headers:** Requires a valid Bearer token.
+*   **Security & Headers:** Requires a valid JWT access token in the `Authorization: Bearer <access-token>` header.
     *   **Request Body (JSON):**
         ```json
         {
@@ -646,7 +647,7 @@ The operational core handling workloads, task assignments, and strict lifecycle 
 *   **RF-TASK-04: Strict State Machine Transition (Specialized Update)**
     *   **Description:** Controls the directional workflow of a task's lifecycle to prevent arbitrary or illogical status shifts.
     *   **HTTP Method & Endpoint:** `PATCH /api/v1/tasks/{taskId}/status`
-    *   **Security & Headers:** Requires a valid Bearer token.
+*   **Security & Headers:** Requires a valid JWT access token in the `Authorization: Bearer <access-token>` header.
     *   **Request Body (JSON):**
         ```json
         {
@@ -690,7 +691,7 @@ Handles internal team collaboration, threaded discussions, and note-taking assoc
 *   **RF-COMM-01: Create Comment (Create)**
     *   **Description:** Appends a text comment to a specific task, associating the comment with the currently authenticated user as the author.
     *   **HTTP Method & Endpoint:** `POST /api/v1/tasks/{taskId}/comments`
-    *   **Security & Headers:** Requires a valid Bearer token (`Authorization: Bearer <accessToken>`).
+*   **Security & Headers:** Requires a valid JWT access token in the `Authorization: Bearer <access-token>` header.
     *   **Request Body (JSON):**
         ```json
         {
@@ -724,7 +725,7 @@ Handles internal team collaboration, threaded discussions, and note-taking assoc
 *   **RF-COMM-02: Read Comments (Read / List)**
     *   **Description:** Retrieves all comments linked to a specific task, returned in chronological order (oldest to newest) to maintain a natural conversation flow.
     *   **HTTP Method & Endpoint:** `GET /api/v1/tasks/{taskId}/comments`
-    *   **Security & Headers:** Requires a valid Bearer token.
+*   **Security & Headers:** Requires a valid JWT access token in the `Authorization: Bearer <access-token>` header.
     *   **Processing Business Logic:**
         *   Validates that the requesting user belongs to the organization owning the task.
         *   Queries database sorting by `createdAt ASC`.
@@ -750,7 +751,7 @@ Handles internal team collaboration, threaded discussions, and note-taking assoc
 *   **RF-COMM-03: Delete Comment (Delete)**
     *   **Description:** Permanently deletes a specific task comment.
     *   **HTTP Method & Endpoint:** `DELETE /api/v1/comments/{commentId}`
-    *   **Security & Headers:** Requires a valid Bearer token.
+*   **Security & Headers:** Requires a valid JWT access token in the `Authorization: Bearer <access-token>` header.
     *   **Security & Business Logic Checks:**
         *   **Authorization Rule:** The security policy must verify that either:
             1. The authenticated user is the **original author** of the comment.
@@ -794,7 +795,7 @@ Handles internal team collaboration, threaded discussions, and note-taking assoc
 | **Proj** | `POST` | `/api/v1/organizations/{organizationId}/projects` | Create workspace project | Org Member |
 | **Proj** | `GET` | `/api/v1/organizations/{organizationId}/projects` | List organization projects | Org Member |
 | **Proj** | `GET` | `/api/v1/projects/{projectId}` | Read project details | Org Member |
-| **Proj** | `PUT` | `/api/v1/projects/{projectId}` | Update project metadata | Org Member |
+| **Proj** | `PUT` | `/api/v1/projects/{projectId}` | Update project metadata | Org `ADMIN` |
 | **Proj** | `PATCH`| `/api/v1/projects/{projectId}/archive` | Archive workspace project | Org `ADMIN` |
 | **Proj** | `DELETE`| `/api/v1/projects/{projectId}` | Delete project permanently | Org `ADMIN` |
 | **Task** | `POST` | `/api/v1/projects/{projectId}/tasks` | Create project task | Org Member |

@@ -26,7 +26,7 @@ The system will expose a stateless REST API that supports:
 The implementation will use the following technologies:
 
 - **Language:** Java
-- **Runtime:** Spring Boot
+- **Runtime:** Java 21 with Spring Boot
 - **Security:** Spring Security with JWT
 - **Persistence:** Spring Data JPA and Hibernate
 - **Database:** PostgreSQL
@@ -103,7 +103,7 @@ The API contract is documented in the [Product Requirements Document](docs/PRD.m
 | Project | `POST` | `/api/v1/organizations/{organizationId}/projects` | Create a project | Active organization member |
 | Project | `GET` | `/api/v1/organizations/{organizationId}/projects` | List organization projects | Active organization member |
 | Project | `GET` | `/api/v1/projects/{projectId}` | Read project details | Active organization member |
-| Project | `PUT` | `/api/v1/projects/{projectId}` | Update project metadata | Project manager or organization `ADMIN` |
+| Project | `PUT` | `/api/v1/projects/{projectId}` | Update project metadata | Organization `ADMIN` |
 | Project | `PATCH` | `/api/v1/projects/{projectId}/archive` | Archive a project | Organization `ADMIN` |
 | Project | `DELETE` | `/api/v1/projects/{projectId}` | Permanently delete a project | Organization `ADMIN` |
 | Task | `POST` | `/api/v1/projects/{projectId}/tasks` | Create a task | Active organization member |
@@ -120,26 +120,18 @@ The API contract is documented in the [Product Requirements Document](docs/PRD.m
 
 ## Planned Project Structure
 
-The intended application structure is:
+The implementation is a Maven multi-module project. The Maven root is `implementation/ProjectManager/`:
 
 ```text
-src/
-├── domain/
-│   ├── model/
-│   ├── valueobject/
-│   ├── repository/
-│   ├── event/
-│   └── exception/
-├── application/
-│   ├── usecase/
-│   ├── dto/
-│   └── mapper/
-└── infrastructure/
-    ├── persistence/
-    ├── web/
-    ├── security/
-    └── event/
+implementation/ProjectManager/
+├── pom.xml                         # Maven aggregator and Java 21 configuration
+├── core-domain/                    # Pure business rules and domain models
+├── app-service/                    # Use cases and application ports
+├── infrastructure-adapter/         # REST, security, persistence and adapters
+└── app-bootstrap/                  # Spring Boot application entry point
 ```
+
+Module dependencies point inward: `app-service` depends on `core-domain`, `infrastructure-adapter` implements application ports, and `app-bootstrap` assembles the application. The domain and application modules must not depend on Spring or persistence frameworks.
 
 The source tree and module structure are planned and are not yet present in the repository.
 
@@ -147,16 +139,15 @@ The source tree and module structure are planned and are not yet present in the 
 
 ## Local Development
 
-The following commands are intended for the completed implementation. They must not be considered executable until the corresponding Maven modules and application configuration are added.
+Run Maven commands from the implementation root:
 
 ```powershell
-# Clone the repository using its final Git URL after the project is published.
+cd implementation\ProjectManager
 mvn clean install
-mvn flyway:migrate
-mvn spring-boot:run
+mvn -pl app-bootstrap -am spring-boot:run
 ```
 
-The application configuration must be supplied through environment variables or Spring configuration properties. Local development should use Docker Compose for PostgreSQL and optional application dependencies.
+The application configuration must be supplied through environment variables or Spring configuration properties. Local development should use Docker Compose for PostgreSQL and optional application dependencies. Flyway migrations run through the application configuration when the database is configured.
 
 ---
 
@@ -188,4 +179,4 @@ The implementation must include:
 
 ## License
 
-This project is distributed under the MIT License. See [LICENSE](LICENSE.md) for details.
+This project is distributed under the MIT License. See [LICENSE](LICENSE) for details.

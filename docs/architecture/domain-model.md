@@ -20,7 +20,7 @@ The domain is structured around core bounded contexts governing tenants, workspa
 - **Responsibility:** Acts as the multi-tenant corporate boundary isolating workspaces, projects, and memberships.
 - **Attributes:**
   - `id`: Unique identifier (UUID).
-  - `name`: Corporate or team name (unique within global scope).
+  - `name`: Corporate or team name (normalized and globally unique across the platform).
   - `createdAt`: Timestamp marking tenant provisioning.
 
 ### 1.3. Membership (`OrganizationMember`)
@@ -71,7 +71,7 @@ The domain is structured around core bounded contexts governing tenants, workspa
 ## 3. Validation Rules & Business Invariants
 
 - **Email Uniqueness:** Every `User` registration must enforce strict global email uniqueness.
-- **Tenant Name Integrity:** Organization names must be non-empty, trimmed, and unique across the platform.
+- **Tenant Name Integrity:** Organization names must be non-empty, trimmed, normalized consistently, and globally unique across the platform. Enforce uniqueness at the database level on both creation and rename.
 - **Project Active Constraint:** No modifications, task creations, or state transitions can occur inside a project if its status is set to `ARCHIVED`.
 - **Membership Association:** A user cannot interact with a project or task unless an active `Membership` links their user ID to the parent `Organization`.
 

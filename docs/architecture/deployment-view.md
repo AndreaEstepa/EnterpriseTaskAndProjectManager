@@ -26,7 +26,7 @@ The system architecture is distributed across four distinct tiers, containerized
   - Reverse proxy routing incoming requests (`/api/v1/*`) to the internal application container cluster.
 
 ### 2.3. Application Server Tier (Backend Container)
-- **Component:** Docker Container (`openjdk:17-slim` or Java 21 runtime).
+- **Component:** Docker container running a Java 21 runtime.
 - **Internal Stack:** 
   - Embedded Tomcat Servlet Container.
   - Spring Boot Application executing the Hexagonal Architecture core (Domain, Application, and Infrastructure adapters).
@@ -41,5 +41,5 @@ The system architecture is distributed across four distinct tiers, containerized
 ---
 
 ## 3. Containerization and Environment Consistency
-- **Multi-Stage Dockerfiles:** The backend is packaged using a multi-stage build process (separating the Gradle/Maven build phase from the lightweight runtime image) to minimize vulnerability surface area and image size.
+- **Multi-Stage Dockerfiles:** The backend is packaged using a multi-stage Maven build (separating the build phase from the lightweight Java 21 runtime image) to minimize vulnerability surface area and image size.
 - **Environment Configuration:** Configuration properties (database connection strings, JWT secrets) are injected securely at runtime via environment variables (`.env` / Kubernetes Secrets), maintaining strict compliance with the Twelve-Factor App methodology.

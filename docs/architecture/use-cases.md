@@ -49,7 +49,7 @@ This document details the functional use cases, actor interactions, and structur
 - **ID:** `UC-TASK-03`
 - **Actor Principal:** Organization Member (`MEMBER` or `ADMIN`).
 - **Preconditions:**
-  * The user must be authenticated with a valid JWT Bearer token.
+  * The user must be authenticated with a valid JWT access token.
   * The parent project must be in an `ACTIVE` state (archived projects block modifications).
   * The target task must exist within the database.
 - **Main Scenario (Normal Flow):**
@@ -70,10 +70,10 @@ This document details the functional use cases, actor interactions, and structur
 - **ID:** `UC-ORG-01`
 - **Actor Principal:** Authenticated User.
 - **Preconditions:**
-  * Valid authentication session (Bearer token).
+  * Valid authentication session using a JWT access token.
 - **Main Scenario (Normal Flow):**
   1. The user submits a `POST /api/v1/organizations` request containing the corporate name.
-  2. The system validates payload constraints (name length and uniqueness).
+  2. The system validates payload constraints (name length and global uniqueness after normalization).
   3. A database transaction begins:
      - Persists the new `Organization` tenant entity.
      - Automatically creates a relational record in the `organization_members` junction table linking the authenticated user ID to the new organization ID with the role `ADMIN`.
@@ -81,4 +81,4 @@ This document details the functional use cases, actor interactions, and structur
 - **Alternative Flows & Exceptions:**
   * **`401 Unauthorized`**: Missing or invalid token.
   * **`400 Bad Request`**: Validation failure on the organization name.
-  * **`409 Conflict`**: Organization name already exists.
+  * **`409 Conflict`**: The normalized organization name is already used by another organization.
