@@ -133,7 +133,9 @@ implementation/ProjectManager/
 
 Module dependencies point inward: `app-service` depends on `core-domain`, `infrastructure-adapter` implements application ports, and `app-bootstrap` assembles the application. The domain and application modules must not depend on Spring or persistence frameworks.
 
-The source tree and module structure are planned and are not yet present in the repository.
+Organize production packages by feature within each layer (for example, `domain.organization`, `application.organization`, and `infrastructure.persistence.organization`). Keep unit tests in the matching module under `src/test/java`; use plain JUnit/Mockito tests for domain and application behavior, and reserve Spring context/database tests for infrastructure and bootstrap.
+
+The Maven modules are in place; domain models, use cases, and infrastructure adapters will be added incrementally as features are implemented.
 
 ---
 
@@ -148,6 +150,8 @@ mvn -pl app-bootstrap -am spring-boot:run
 ```
 
 The application configuration must be supplied through environment variables or Spring configuration properties. Local development should use Docker Compose for PostgreSQL and optional application dependencies. Flyway migrations run through the application configuration when the database is configured.
+
+Database migrations live in `infrastructure-adapter/src/main/resources/db/migration/` and use Flyway's versioned naming convention, for example `V1__create_initial_schema.sql`. They are applied automatically when `app-bootstrap` starts.
 
 ---
 

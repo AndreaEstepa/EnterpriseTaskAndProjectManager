@@ -13,8 +13,11 @@ The domain is structured around core bounded contexts governing tenants, workspa
 - **Attributes:**
   - `id`: Unique identifier (UUID).
   - `email`: Unique string identifier used for authentication.
-  - `passwordHash`: Encrypted credential string (never exposed to external layers).
+  - `fullName`: Display name, between 2 and 100 characters.
+  - `passwordHash`: One-way password hash (never returned from API responses).
+  - `status`: Account lifecycle (`ACTIVE`, `INACTIVE`).
   - `createdAt`: Timestamp marking registration time.
+  - `updatedAt`: Timestamp of the latest profile or status change.
 
 ### 1.2. Organization
 - **Responsibility:** Acts as the multi-tenant corporate boundary isolating workspaces, projects, and memberships.
@@ -22,6 +25,7 @@ The domain is structured around core bounded contexts governing tenants, workspa
   - `id`: Unique identifier (UUID).
   - `name`: Corporate or team name (normalized and globally unique across the platform).
   - `createdAt`: Timestamp marking tenant provisioning.
+  - `updatedAt`: Timestamp of the latest metadata change.
 
 ### 1.3. Membership (`OrganizationMember`)
 - **Responsibility:** Manages the relational bridge between a `User` and an `Organization`, encapsulating the access level and operational rights within that specific tenant via a `RoleEnum` (`ADMIN` or `MEMBER`).
@@ -70,8 +74,10 @@ The domain is structured around core bounded contexts governing tenants, workspa
 
 ## 3. Validation Rules & Business Invariants
 
-- **Email Uniqueness:** Every `User` registration must enforce strict global email uniqueness.
+- **Email Integrity:** Email addresses must be valid, at most 255 characters, trimmed, and normalized to lowercase. Enforce global uniqueness in persistence.
 - **Tenant Name Integrity:** Organization names must be non-empty, trimmed, normalized consistently, and globally unique across the platform. Enforce uniqueness at the database level on both creation and rename.
+- **User Profile Integrity:** Full names must be trimmed and contain 2 to 100 characters. Only active users can update their profile or join an organization; deactivation is a one-way transition.
+- **Membership Integrity:** A membership references one organization and one active user, has exactly one `ADMIN` or `MEMBER` role, and is unique for each organization/user pair.
 - **Project Active Constraint:** No modifications, task creations, or state transitions can occur inside a project if its status is set to `ARCHIVED`.
 - **Membership Association:** A user cannot interact with a project or task unless an active `Membership` links their user ID to the parent `Organization`.
 
