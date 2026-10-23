@@ -21,9 +21,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 class CreateOrganizationUseCaseTest {
-
     private static final Instant NOW = Instant.parse("2026-10-22T10:00:00Z");
-
     private final UserRepository users = mock(UserRepository.class);
     private final OrganizationProvisioningPort provisioning = mock(OrganizationProvisioningPort.class);
     private final Clock clock = Clock.fixed(NOW, ZoneOffset.UTC);
@@ -32,14 +30,10 @@ class CreateOrganizationUseCaseTest {
     @Test
     void provisionsOrganizationForActiveUser() {
         UUID userId = UUID.randomUUID();
-        User user = User.register(userId, "jane@example.com", "Jane Doe", "bcrypt-hash", NOW);
+        User user = User.register(userId, "pepe@example.com", "pepe Doe", "bcrypt-hash", NOW);
         when(users.findById(userId)).thenReturn(Optional.of(user));
-        when(provisioning.createWithAdmin(any(Organization.class), any(UUID.class), any(Instant.class)))
-                .thenAnswer(invocation -> invocation.getArgument(0));
-
-        Organization created = useCase.execute(
-                new CreateOrganizationUseCase.CreateOrganizationCommand(userId, "Acme Corporation"));
-
+        when(provisioning.createWithAdmin(any(Organization.class), any(UUID.class), any(Instant.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        Organization created = useCase.execute(new CreateOrganizationUseCase.CreateOrganizationCommand(userId, "Acme Corporation"));
         assertEquals("Acme Corporation", created.name().value());
         assertEquals(NOW, created.createdAt());
         verify(provisioning).createWithAdmin(created, userId, NOW);
@@ -49,10 +43,7 @@ class CreateOrganizationUseCaseTest {
     void rejectsMissingOrInactiveCreatorBeforeProvisioning() {
         UUID userId = UUID.randomUUID();
         when(users.findById(userId)).thenReturn(Optional.empty());
-
-        assertThrows(AccessDeniedException.class, () -> useCase.execute(
-                new CreateOrganizationUseCase.CreateOrganizationCommand(userId, "Acme Corporation")));
-
+        assertThrows(AccessDeniedException.class, () -> useCase.execute(new CreateOrganizationUseCase.CreateOrganizationCommand(userId, "Acme Corporation")));
         verify(provisioning, never()).createWithAdmin(any(), any(), any());
     }
 }
