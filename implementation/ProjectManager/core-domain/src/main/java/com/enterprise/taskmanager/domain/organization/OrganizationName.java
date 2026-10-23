@@ -6,7 +6,6 @@ import java.util.Locale;
 import java.util.Objects;
 
 public record OrganizationName(String value) {
-
     public OrganizationName {
         Objects.requireNonNull(value, "Organization name must not be null");
         value = value.trim();

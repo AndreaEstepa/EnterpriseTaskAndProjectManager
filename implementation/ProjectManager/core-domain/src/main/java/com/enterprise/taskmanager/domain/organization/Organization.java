@@ -7,7 +7,6 @@ import java.util.Objects;
 import java.util.UUID;
 
 public final class Organization {
-
     private final UUID id;
     private final OrganizationName name;
     private final Instant createdAt;

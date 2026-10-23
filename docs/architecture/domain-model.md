@@ -38,9 +38,11 @@ The domain is structured around core bounded contexts governing tenants, workspa
 - **Responsibility:** Represents an isolated workspace or product container confined strictly within a single organization's boundaries.
 - **Attributes:**
   - `id`: Unique identifier (UUID).
+  - `organizationId`: Identifier of the owning organization.
   - `name`: Workspace title.
-  - `description`: Scope or objectives summary.
+  - `description`: Optional scope or objectives summary, up to 500 characters.
   - `status`: Enumerated workspace lifecycle (`ACTIVE`, `ARCHIVED`).
+  - `createdAt` / `updatedAt`: Creation and most recent modification timestamps.
 
 ### 1.5. Task
 - **Responsibility:** Represents the atomic operational unit or ticket assigned to a project, governed by a strict state machine workflow.
@@ -76,9 +78,10 @@ The domain is structured around core bounded contexts governing tenants, workspa
 
 - **Email Integrity:** Email addresses must be valid, at most 255 characters, trimmed, and normalized to lowercase. Enforce global uniqueness in persistence.
 - **Tenant Name Integrity:** Organization names must be non-empty, trimmed, normalized consistently, and globally unique across the platform. Enforce uniqueness at the database level on both creation and rename.
+- **Project Integrity:** Project names must be trimmed and contain 2 to 100 characters. Descriptions are optional and limited to 500 characters.
 - **User Profile Integrity:** Full names must be trimmed and contain 2 to 100 characters. Only active users can update their profile or join an organization; deactivation is a one-way transition.
 - **Membership Integrity:** A membership references one organization and one active user, has exactly one `ADMIN` or `MEMBER` role, and is unique for each organization/user pair.
-- **Project Active Constraint:** No modifications, task creations, or state transitions can occur inside a project if its status is set to `ARCHIVED`.
+- **Project Active Constraint:** Archived projects cannot be renamed or have their description modified; task creation and state transitions are also blocked.
 - **Membership Association:** A user cannot interact with a project or task unless an active `Membership` links their user ID to the parent `Organization`.
 
 ---
