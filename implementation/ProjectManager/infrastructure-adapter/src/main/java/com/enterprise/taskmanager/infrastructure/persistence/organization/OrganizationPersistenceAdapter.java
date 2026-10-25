@@ -26,10 +26,7 @@ public class OrganizationPersistenceAdapter implements OrganizationProvisioningP
     private final SpringDataOrganizationMemberRepository members;
     private final SpringDataUserRepository users;
 
-    public OrganizationPersistenceAdapter(
-            SpringDataOrganizationRepository organizations,
-            SpringDataOrganizationMemberRepository members,
-            SpringDataUserRepository users) {
+    public OrganizationPersistenceAdapter(SpringDataOrganizationRepository organizations, SpringDataOrganizationMemberRepository members, SpringDataUserRepository users) {
         this.organizations = organizations;
         this.members = members;
         this.users = users;
@@ -46,8 +43,7 @@ public class OrganizationPersistenceAdapter implements OrganizationProvisioningP
                 UUID.randomUUID(), organization, admin, OrganizationRole.ADMIN, joinedAt);
 
         try {
-            OrganizationJpaEntity savedOrganization = organizations.saveAndFlush(
-                    new OrganizationJpaEntity(organization));
+            OrganizationJpaEntity savedOrganization = organizations.saveAndFlush(new OrganizationJpaEntity(organization));
             members.saveAndFlush(new OrganizationMemberJpaEntity(membership));
             return savedOrganization.toDomain();
         } catch (DataIntegrityViolationException exception) {
@@ -74,11 +70,7 @@ public class OrganizationPersistenceAdapter implements OrganizationProvisioningP
     }
 
     private OrganizationAccess toAccess(OrganizationAccessProjection projection) {
-        Organization organization = Organization.restore(
-                projection.getOrganizationId(),
-                projection.getOrganizationName(),
-                projection.getCreatedAt(),
-                projection.getUpdatedAt());
+        Organization organization = Organization.restore(projection.getOrganizationId(), projection.getOrganizationName(), projection.getCreatedAt(), projection.getUpdatedAt());
         return new OrganizationAccess(organization, OrganizationRole.valueOf(projection.getRole()));
     }
 }

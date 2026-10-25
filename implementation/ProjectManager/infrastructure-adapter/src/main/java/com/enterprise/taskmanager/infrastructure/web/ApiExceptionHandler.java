@@ -4,6 +4,7 @@ import com.enterprise.taskmanager.application.shared.AccessDeniedException;
 import com.enterprise.taskmanager.application.shared.EmailAlreadyRegisteredException;
 import com.enterprise.taskmanager.application.shared.InvalidCredentialsException;
 import com.enterprise.taskmanager.application.shared.OrganizationNameAlreadyTakenException;
+import com.enterprise.taskmanager.application.shared.ProjectNameAlreadyTakenException;
 import com.enterprise.taskmanager.application.shared.ResourceNotFoundException;
 import com.enterprise.taskmanager.domain.shared.DomainValidationException;
 import org.springframework.http.HttpStatus;
@@ -23,7 +24,7 @@ public class ApiExceptionHandler {
         return problem(HttpStatus.BAD_REQUEST, exception.getMessage());
     }
 
-    @ExceptionHandler({EmailAlreadyRegisteredException.class, OrganizationNameAlreadyTakenException.class})
+    @ExceptionHandler({EmailAlreadyRegisteredException.class, OrganizationNameAlreadyTakenException.class, ProjectNameAlreadyTakenException.class})
     ResponseEntity<ProblemDetail> handleConflict(Exception exception) {
         return problem(HttpStatus.CONFLICT, exception.getMessage());
     }

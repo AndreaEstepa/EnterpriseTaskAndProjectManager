@@ -24,45 +24,30 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/api/v1/organizations")
 public class OrganizationController {
-
     private final CreateOrganizationUseCase createOrganization;
     private final ListOrganizationsUseCase listOrganizations;
     private final GetOrganizationUseCase getOrganization;
 
-    public OrganizationController(
-            CreateOrganizationUseCase createOrganization,
-            ListOrganizationsUseCase listOrganizations,
-            GetOrganizationUseCase getOrganization) {
+    public OrganizationController(CreateOrganizationUseCase createOrganization, ListOrganizationsUseCase listOrganizations, GetOrganizationUseCase getOrganization) {
         this.createOrganization = createOrganization;
         this.listOrganizations = listOrganizations;
         this.getOrganization = getOrganization;
     }
 
     @PostMapping
-    public ResponseEntity<OrganizationResponse> create(
-            @AuthenticationPrincipal Jwt jwt,
-            @Valid @RequestBody CreateOrganizationRequest request) {
-        Organization organization = createOrganization.execute(
-                new CreateOrganizationUseCase.CreateOrganizationCommand(userId(jwt), request.name()));
+    public ResponseEntity<OrganizationResponse> create(@AuthenticationPrincipal Jwt jwt, @Valid @RequestBody CreateOrganizationRequest request) {
+        Organization organization = createOrganization.execute(new CreateOrganizationUseCase.CreateOrganizationCommand(userId(jwt), request.name()));
         OrganizationResponse response = OrganizationResponse.from(organization, OrganizationRole.ADMIN);
-        return ResponseEntity.created(ServletUriComponentsBuilder.fromCurrentRequest()
-                        .path("/{organizationId}")
-                        .buildAndExpand(organization.id())
-                        .toUri())
-                .body(response);
+        return ResponseEntity.created(ServletUriComponentsBuilder.fromCurrentRequest().path("/{organizationId}").buildAndExpand(organization.id()).toUri()).body(response);
     }
 
     @GetMapping
     public List<OrganizationResponse> list(@AuthenticationPrincipal Jwt jwt) {
-        return listOrganizations.execute(userId(jwt)).stream()
-                .map(OrganizationResponse::from)
-                .toList();
+        return listOrganizations.execute(userId(jwt)).stream().map(OrganizationResponse::from).toList();
     }
 
     @GetMapping("/{organizationId}")
-    public OrganizationResponse get(
-            @AuthenticationPrincipal Jwt jwt,
-            @PathVariable UUID organizationId) {
+    public OrganizationResponse get(@AuthenticationPrincipal Jwt jwt, @PathVariable UUID organizationId) {
         return OrganizationResponse.from(getOrganization.execute(organizationId, userId(jwt)));
     }
 

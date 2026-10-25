@@ -5,6 +5,8 @@ import com.enterprise.taskmanager.application.organization.GetOrganizationUseCas
 import com.enterprise.taskmanager.application.organization.ListOrganizationsUseCase;
 import com.enterprise.taskmanager.application.organization.OrganizationProvisioningPort;
 import com.enterprise.taskmanager.application.organization.OrganizationQueryPort;
+import com.enterprise.taskmanager.application.project.CreateProjectUseCase;
+import com.enterprise.taskmanager.application.project.ProjectRepository;
 import com.enterprise.taskmanager.application.user.AccessTokenIssuer;
 import com.enterprise.taskmanager.application.user.AuthenticateUserUseCase;
 import com.enterprise.taskmanager.application.user.PasswordHasher;
@@ -19,40 +21,32 @@ import java.time.Clock;
 public class ApplicationUseCaseConfiguration {
 
     @Bean
-    RegisterUserUseCase registerUserUseCase(
-            UserRepository users,
-            PasswordHasher passwordHasher,
-            Clock applicationClock) {
+    RegisterUserUseCase registerUserUseCase(UserRepository users, PasswordHasher passwordHasher, Clock applicationClock) {
         return new RegisterUserUseCase(users, passwordHasher, applicationClock);
     }
 
     @Bean
-    AuthenticateUserUseCase authenticateUserUseCase(
-            UserRepository users,
-            PasswordHasher passwordHasher,
-            AccessTokenIssuer accessTokenIssuer) {
+    AuthenticateUserUseCase authenticateUserUseCase(UserRepository users, PasswordHasher passwordHasher, AccessTokenIssuer accessTokenIssuer) {
         return new AuthenticateUserUseCase(users, passwordHasher, accessTokenIssuer);
     }
 
     @Bean
-    CreateOrganizationUseCase createOrganizationUseCase(
-            UserRepository users,
-            OrganizationProvisioningPort provisioningPort,
-            Clock applicationClock) {
+    CreateOrganizationUseCase createOrganizationUseCase(UserRepository users, OrganizationProvisioningPort provisioningPort, Clock applicationClock) {
         return new CreateOrganizationUseCase(users, provisioningPort, applicationClock);
     }
 
     @Bean
-    ListOrganizationsUseCase listOrganizationsUseCase(
-            UserRepository users,
-            OrganizationQueryPort organizationQueryPort) {
+    ListOrganizationsUseCase listOrganizationsUseCase(UserRepository users, OrganizationQueryPort organizationQueryPort) {
         return new ListOrganizationsUseCase(users, organizationQueryPort);
     }
 
     @Bean
-    GetOrganizationUseCase getOrganizationUseCase(
-            UserRepository users,
-            OrganizationQueryPort organizationQueryPort) {
+    GetOrganizationUseCase getOrganizationUseCase(UserRepository users, OrganizationQueryPort organizationQueryPort) {
         return new GetOrganizationUseCase(users, organizationQueryPort);
+    }
+
+    @Bean
+    CreateProjectUseCase createProjectUseCase(UserRepository users, OrganizationQueryPort organizationQueryPort, ProjectRepository projects, Clock applicationClock){
+        return new CreateProjectUseCase(users, organizationQueryPort, projects, applicationClock);
     }
 }
