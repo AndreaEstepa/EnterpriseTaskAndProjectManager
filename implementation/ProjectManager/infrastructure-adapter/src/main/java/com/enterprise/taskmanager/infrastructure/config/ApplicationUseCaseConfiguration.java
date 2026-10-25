@@ -5,8 +5,12 @@ import com.enterprise.taskmanager.application.organization.GetOrganizationUseCas
 import com.enterprise.taskmanager.application.organization.ListOrganizationsUseCase;
 import com.enterprise.taskmanager.application.organization.OrganizationProvisioningPort;
 import com.enterprise.taskmanager.application.organization.OrganizationQueryPort;
+import com.enterprise.taskmanager.application.project.ArchiveProjectUseCase;
 import com.enterprise.taskmanager.application.project.CreateProjectUseCase;
+import com.enterprise.taskmanager.application.project.GetProjectUseCase;
+import com.enterprise.taskmanager.application.project.ListProjectsUseCase;
 import com.enterprise.taskmanager.application.project.ProjectRepository;
+import com.enterprise.taskmanager.application.project.UpdateProjectUseCase;
 import com.enterprise.taskmanager.application.user.AccessTokenIssuer;
 import com.enterprise.taskmanager.application.user.AuthenticateUserUseCase;
 import com.enterprise.taskmanager.application.user.PasswordHasher;
@@ -48,5 +52,39 @@ public class ApplicationUseCaseConfiguration {
     @Bean
     CreateProjectUseCase createProjectUseCase(UserRepository users, OrganizationQueryPort organizationQueryPort, ProjectRepository projects, Clock applicationClock){
         return new CreateProjectUseCase(users, organizationQueryPort, projects, applicationClock);
+    }
+
+    @Bean
+    ListProjectsUseCase listProjectsUseCase(
+            UserRepository users,
+            OrganizationQueryPort organizationQueryPort,
+            ProjectRepository projects) {
+        return new ListProjectsUseCase(users, organizationQueryPort, projects);
+    }
+
+    @Bean
+    GetProjectUseCase getProjectUseCase(
+            UserRepository users,
+            OrganizationQueryPort organizationQueryPort,
+            ProjectRepository projects) {
+        return new GetProjectUseCase(users, organizationQueryPort, projects);
+    }
+
+    @Bean
+    UpdateProjectUseCase updateProjectUseCase(
+            UserRepository users,
+            OrganizationQueryPort organizationQueryPort,
+            ProjectRepository projects,
+            Clock applicationClock) {
+        return new UpdateProjectUseCase(users, organizationQueryPort, projects, applicationClock);
+    }
+
+    @Bean
+    ArchiveProjectUseCase archiveProjectUseCase(
+            UserRepository users,
+            OrganizationQueryPort organizationQueryPort,
+            ProjectRepository projects,
+            Clock applicationClock) {
+        return new ArchiveProjectUseCase(users, organizationQueryPort, projects, applicationClock);
     }
 }

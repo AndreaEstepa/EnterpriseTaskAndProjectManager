@@ -1,6 +1,10 @@
 package com.enterprise.taskmanager.infrastructure.web.project;
 
 import com.enterprise.taskmanager.application.project.CreateProjectUseCase;
+import com.enterprise.taskmanager.application.project.ArchiveProjectUseCase;
+import com.enterprise.taskmanager.application.project.GetProjectUseCase;
+import com.enterprise.taskmanager.application.project.ListProjectsUseCase;
+import com.enterprise.taskmanager.application.project.UpdateProjectUseCase;
 import com.enterprise.taskmanager.application.shared.ProjectNameAlreadyTakenException;
 import com.enterprise.taskmanager.domain.project.Project;
 import com.enterprise.taskmanager.domain.project.ProjectStatus;
@@ -41,6 +45,10 @@ class ProjectControllerTest {
     private static final Instant NOW = Instant.parse("2026-10-25T10:00:00Z");
 
     private final CreateProjectUseCase createProjectUseCase = mock(CreateProjectUseCase.class);
+    private final ListProjectsUseCase listProjectsUseCase = mock(ListProjectsUseCase.class);
+    private final GetProjectUseCase getProjectUseCase = mock(GetProjectUseCase.class);
+    private final UpdateProjectUseCase updateProjectUseCase = mock(UpdateProjectUseCase.class);
+    private final ArchiveProjectUseCase archiveProjectUseCase = mock(ArchiveProjectUseCase.class);
 
     private final Jwt jwt = Jwt.withTokenValue("test-token")
             .header("alg", "none")
@@ -67,7 +75,12 @@ class ProjectControllerTest {
     private final MockMvc mockMvc;
 
     ProjectControllerTest() {
-        mockMvc = standaloneSetup(new ProjectController(createProjectUseCase))
+        mockMvc = standaloneSetup(new ProjectController(
+                        createProjectUseCase,
+                        listProjectsUseCase,
+                        getProjectUseCase,
+                        updateProjectUseCase,
+                        archiveProjectUseCase))
                 .setMessageConverters(new MappingJackson2HttpMessageConverter(
                         new ObjectMapper()
                                 .registerModule(new JavaTimeModule())

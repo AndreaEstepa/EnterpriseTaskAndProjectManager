@@ -34,8 +34,8 @@ This document details the functional use cases, actor interactions, and structur
 
 
 ### 2.3 Projects & Task Management Core (`UC-03-Projects-Tasks-Domain`)
-- **`UC-PROJ-01`**: Create & Manage Projects (`POST/GET/PUT /api/v1/projects`) — Establishes isolated workspaces inside tenant boundaries.
-- **`UC-PROJ-02`**: Archive Project (`PATCH /api/v1/projects/{projectId}/archive`) — Transitions workspace to read-only mode (`ADMIN` only).
+- **`UC-PROJ-01`**: Create & Manage Projects (`POST /api/v1/projects`, `GET /api/v1/projects?organizationId={organizationId}`, `GET/PUT /api/v1/projects/{projectId}`) — Creates and manages workspaces inside tenant boundaries. Only organization members can list, read, create, or update projects in their organization.
+- **`UC-PROJ-02`**: Archive Project (`PATCH /api/v1/projects/{projectId}/archive`) — Transitions workspace to read-only mode; restricted to organization `ADMIN`.
 - **`UC-TASK-01`**: Create Task (`POST /api/v1/projects/{projectId}/tasks`) — *Includes* `Verify Project Is Active`. Initializes tasks strictly in the `BACKLOG` state.
 - **`UC-TASK-02`**: Assign & Update Task Details (`PUT /api/v1/tasks/{taskId}`) — Manages task assignees, descriptions, and metadata updates within project boundaries.
 - **`UC-TASK-03`**: Task State Machine Transition (`PATCH /api/v1/tasks/{taskId}/status`) — *Includes* `Evaluate State Invariants`. Enforces directional workflow rules (`BACKLOG` > `TODO` > `IN_PROGRESS` > `IN_REVIEW` > `DONE`) and blocks illegal jumps.
