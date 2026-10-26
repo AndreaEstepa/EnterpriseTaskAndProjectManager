@@ -10,6 +10,7 @@ import com.enterprise.taskmanager.domain.shared.DomainValidationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
+import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -24,9 +25,18 @@ public class ApiExceptionHandler {
         return problem(HttpStatus.BAD_REQUEST, exception.getMessage());
     }
 
-    @ExceptionHandler({EmailAlreadyRegisteredException.class, OrganizationNameAlreadyTakenException.class, ProjectNameAlreadyTakenException.class})
+    @ExceptionHandler({
+            EmailAlreadyRegisteredException.class,
+            OrganizationNameAlreadyTakenException.class,
+            ProjectNameAlreadyTakenException.class
+    })
     ResponseEntity<ProblemDetail> handleConflict(Exception exception) {
         return problem(HttpStatus.CONFLICT, exception.getMessage());
+    }
+
+    @ExceptionHandler(OptimisticLockingFailureException.class)
+    ResponseEntity<ProblemDetail> handleOptimisticLockingFailure(OptimisticLockingFailureException exception) {
+        return problem(HttpStatus.CONFLICT, "The task was modified by another request. Reload it and retry.");
     }
 
     @ExceptionHandler(InvalidCredentialsException.class)

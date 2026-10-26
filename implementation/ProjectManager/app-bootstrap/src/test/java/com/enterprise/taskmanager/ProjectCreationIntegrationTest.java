@@ -132,6 +132,69 @@ class ProjectCreationIntegrationTest {
                     projectName);
             assertEquals(1, persistedProjects);
 
+            ResponseEntity<String> taskResponse = http.exchange(
+                    "/api/v1/projects/" + projectId + "/tasks",
+                    HttpMethod.POST,
+                    new HttpEntity<>("{\"title\":\"Integration task\"}", projectHeaders),
+                    String.class);
+            assertEquals(HttpStatus.CREATED, taskResponse.getStatusCode());
+            JsonNode taskJson = objectMapper.readTree(taskResponse.getBody());
+            assertEquals("Integration task", taskJson.path("title").asText());
+            assertEquals("BACKLOG", taskJson.path("status").asText());
+            assertEquals("MEDIUM", taskJson.path("priority").asText());
+            UUID taskId = UUID.fromString(taskJson.path("id").asText());
+            UUID userId = UUID.fromString(taskJson.path("createdByUserId").asText());
+
+            ResponseEntity<String> taskListResponse = http.exchange(
+                    "/api/v1/projects/" + projectId + "/tasks",
+                    HttpMethod.GET,
+                    new HttpEntity<>(projectHeaders),
+                    String.class);
+            assertEquals(HttpStatus.OK, taskListResponse.getStatusCode());
+            assertEquals(taskId.toString(), objectMapper.readTree(taskListResponse.getBody()).get(0).path("id").asText());
+
+            ResponseEntity<String> taskUpdateResponse = http.exchange(
+                    "/api/v1/tasks/" + taskId,
+                    HttpMethod.PUT,
+                    new HttpEntity<>(
+                            """
+                                    {
+                                      "title": "Updated integration task",
+                                      "description": "Updated through HTTP",
+                                      "priority": "HIGH"
+                                    }
+                                    """,
+                            projectHeaders),
+                    String.class);
+            assertEquals(HttpStatus.OK, taskUpdateResponse.getStatusCode());
+            assertEquals(
+                    "Updated integration task",
+                    objectMapper.readTree(taskUpdateResponse.getBody()).path("title").asText());
+            assertEquals("HIGH", objectMapper.readTree(taskUpdateResponse.getBody()).path("priority").asText());
+            assertEquals(1, objectMapper.readTree(taskUpdateResponse.getBody()).path("version").asInt());
+
+            HttpResponse<String> taskAssignmentResponse = patchJson(
+                    "/api/v1/tasks/" + taskId + "/assignee",
+                    accessToken,
+                    "{\"assigneeUserId\":\"" + userId + "\"}");
+            assertEquals(HttpStatus.OK.value(), taskAssignmentResponse.statusCode());
+            assertEquals(
+                    userId.toString(),
+                    objectMapper.readTree(taskAssignmentResponse.body()).path("assigneeUserId").asText());
+
+            HttpResponse<String> statusTransitionResponse = patchJson(
+                    "/api/v1/tasks/" + taskId + "/status",
+                    accessToken,
+                    "{\"targetStatus\":\"TODO\"}");
+            assertEquals(HttpStatus.OK.value(), statusTransitionResponse.statusCode());
+            assertEquals("TODO", objectMapper.readTree(statusTransitionResponse.body()).path("status").asText());
+
+            HttpResponse<String> invalidTransitionResponse = patchJson(
+                    "/api/v1/tasks/" + taskId + "/status",
+                    accessToken,
+                    "{\"targetStatus\":\"DONE\"}");
+            assertEquals(HttpStatus.BAD_REQUEST.value(), invalidTransitionResponse.statusCode());
+
             ResponseEntity<String> duplicateProjectResponse = http.exchange(
                     "/api/v1/projects",
                     HttpMethod.POST,
@@ -198,6 +261,18 @@ class ProjectCreationIntegrationTest {
                     "ARCHIVED",
                     objectMapper.readTree(archivedProjectResponse.body()).path("status").asText());
 
+            ResponseEntity<String> archivedTaskReadResponse = http.exchange(
+                    "/api/v1/tasks/" + taskId,
+                    HttpMethod.GET,
+                    new HttpEntity<>(projectHeaders),
+                    String.class);
+            assertEquals(HttpStatus.OK, archivedTaskReadResponse.getStatusCode());
+            HttpResponse<String> archivedTaskUpdateResponse = patchJson(
+                    "/api/v1/tasks/" + taskId + "/status",
+                    accessToken,
+                    "{\"targetStatus\":\"IN_PROGRESS\"}");
+            assertEquals(HttpStatus.FORBIDDEN.value(), archivedTaskUpdateResponse.statusCode());
+
             Integer archivedRows = jdbcTemplate.queryForObject(
                     "SELECT count(*) FROM projects WHERE id = ? AND status = 'ARCHIVED'",
                     Integer.class,
@@ -213,5 +288,15 @@ class ProjectCreationIntegrationTest {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
         return new HttpEntity<>(body, headers);
+    }
+
+    private HttpResponse<String> patchJson(String path, String accessToken, String body) throws Exception {
+        return patchHttpClient.send(
+                HttpRequest.newBuilder(URI.create(http.getRootUri() + path))
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken)
+                        .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+                        .method("PATCH", HttpRequest.BodyPublishers.ofString(body))
+                        .build(),
+                HttpResponse.BodyHandlers.ofString());
     }
 }

@@ -48,10 +48,15 @@ The domain is structured around core bounded contexts governing tenants, workspa
 - **Responsibility:** Represents the atomic operational unit or ticket assigned to a project, governed by a strict state machine workflow.
 - **Attributes:**
   - `id`: Unique identifier (UUID).
+  - `projectId`: Parent project identifier.
+  - `createdByUserId`: Identifier of the user who created the task.
+  - `assigneeUserId`: Optional identifier of an organization member assigned to the task.
   - `title`: Summary of the task objective.
   - `description`: Detailed technical or operational notes.
-  - `status`: Current lifecycle phase (`TaskStatusEnum`).
-  - `updatedAt`: Audit timestamp of the last modification.
+  - `status`: Current lifecycle phase (`BACKLOG`, `TODO`, `IN_PROGRESS`, `IN_REVIEW`, `DONE`).
+  - `priority`: Work urgency (`LOW`, `MEDIUM`, `HIGH`, `URGENT`).
+  - `version`: Optimistic-lock version used to reject stale concurrent updates.
+  - `createdAt` / `updatedAt`: Creation and most recent modification timestamps.
 
 ### 1.6. Comment
 - **Responsibility:** Represents a contextual text-based collaboration thread linked to a specific task for team communication.
@@ -82,6 +87,9 @@ The domain is structured around core bounded contexts governing tenants, workspa
 - **User Profile Integrity:** Full names must be trimmed and contain 2 to 100 characters. Only active users can update their profile or join an organization; deactivation is a one-way transition.
 - **Membership Integrity:** A membership references one organization and one active user, has exactly one `ADMIN` or `MEMBER` role, and is unique for each organization/user pair.
 - **Project Active Constraint:** Archived projects cannot be renamed or have their description modified; task creation and state transitions are also blocked.
+- **Task Integrity:** Task titles are trimmed and contain 2 to 150 characters. Tasks start in `BACKLOG`; assignees must be active members of the task's organization.
+- **Archived Task Access:** Organization members can read tasks in archived projects, but cannot create or modify them.
+- **Concurrent Task Updates:** Concurrent writes use optimistic locking; a stale write returns a conflict and must be retried after reloading.
 - **Membership Association:** A user cannot interact with a project or task unless an active `Membership` links their user ID to the parent `Organization`.
 
 ---

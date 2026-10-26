@@ -36,9 +36,11 @@ This document details the functional use cases, actor interactions, and structur
 ### 2.3 Projects & Task Management Core (`UC-03-Projects-Tasks-Domain`)
 - **`UC-PROJ-01`**: Create & Manage Projects (`POST /api/v1/projects`, `GET /api/v1/projects?organizationId={organizationId}`, `GET/PUT /api/v1/projects/{projectId}`) — Creates and manages workspaces inside tenant boundaries. Only organization members can list, read, create, or update projects in their organization.
 - **`UC-PROJ-02`**: Archive Project (`PATCH /api/v1/projects/{projectId}/archive`) — Transitions workspace to read-only mode; restricted to organization `ADMIN`.
-- **`UC-TASK-01`**: Create Task (`POST /api/v1/projects/{projectId}/tasks`) — *Includes* `Verify Project Is Active`. Initializes tasks strictly in the `BACKLOG` state.
-- **`UC-TASK-02`**: Assign & Update Task Details (`PUT /api/v1/tasks/{taskId}`) — Manages task assignees, descriptions, and metadata updates within project boundaries.
-- **`UC-TASK-03`**: Task State Machine Transition (`PATCH /api/v1/tasks/{taskId}/status`) — *Includes* `Evaluate State Invariants`. Enforces directional workflow rules (`BACKLOG` > `TODO` > `IN_PROGRESS` > `IN_REVIEW` > `DONE`) and blocks illegal jumps.
+- **`UC-TASK-01`**: Create Task (`POST /api/v1/projects/{projectId}/tasks`) — *Includes* `Verify Project Is Active`. Initializes tasks strictly in the `BACKLOG` state; omitted priority defaults to `MEDIUM`.
+- **`UC-TASK-02`**: Read Tasks (`GET /api/v1/projects/{projectId}/tasks`, `GET /api/v1/tasks/{taskId}`) — Lists and retrieves tasks for organization members, including read-only tasks in archived projects.
+- **`UC-TASK-03`**: Update Task Details (`PUT /api/v1/tasks/{taskId}`) — Updates title, description, and priority in active projects.
+- **`UC-TASK-04`**: Assign Task (`PATCH /api/v1/tasks/{taskId}/assignee`) — Assigns a task to an active member of the owning organization or clears its assignee.
+- **`UC-TASK-05`**: Task State Machine Transition (`PATCH /api/v1/tasks/{taskId}/status`) — *Includes* `Evaluate State Invariants`. Enforces directional workflow rules (`BACKLOG` > `TODO` > `IN_PROGRESS` > `IN_REVIEW` > `DONE`) and blocks illegal jumps.
 - **`UC-COMM-01`**: Task Collaboration (`POST/GET/DELETE /api/v1/tasks/{taskId}/comments`) — Manages team discussion threads with author/admin deletion privileges.
 
 ---
@@ -46,7 +48,7 @@ This document details the functional use cases, actor interactions, and structur
 ## 3. Deep-Dive Use Case Specifications
 
 ### 3.1 Strict State Machine Transition (Task Lifecycle)
-- **ID:** `UC-TASK-03`
+- **ID:** `UC-TASK-05`
 - **Actor Principal:** Organization Member (`MEMBER` or `ADMIN`).
 - **Preconditions:**
   * The user must be authenticated with a valid JWT access token.
@@ -63,6 +65,7 @@ This document details the functional use cases, actor interactions, and structur
   * **`401 Unauthorized`**: If the JWT token is expired, malformed, or missing.
   * **`403 Forbidden`**: If the user lacks access to the parent organization or if the project is `ARCHIVED`.
   * **`400 Bad Request / DomainValidationException`**: If an illegal state jump is attempted (e.g., jumping straight from `BACKLOG` to `DONE`), the domain engine blocks execution and returns a structured RFC 7807 error.
+  * **`409 Conflict`**: If another request modified the task concurrently, the client must reload the task before retrying.
 
 ---
 

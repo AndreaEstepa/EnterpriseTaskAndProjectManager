@@ -11,6 +11,13 @@ import com.enterprise.taskmanager.application.project.GetProjectUseCase;
 import com.enterprise.taskmanager.application.project.ListProjectsUseCase;
 import com.enterprise.taskmanager.application.project.ProjectRepository;
 import com.enterprise.taskmanager.application.project.UpdateProjectUseCase;
+import com.enterprise.taskmanager.application.task.AssignTaskUseCase;
+import com.enterprise.taskmanager.application.task.CreateTaskUseCase;
+import com.enterprise.taskmanager.application.task.GetTaskUseCase;
+import com.enterprise.taskmanager.application.task.ListTasksUseCase;
+import com.enterprise.taskmanager.application.task.TaskRepository;
+import com.enterprise.taskmanager.application.task.TransitionTaskStatusUseCase;
+import com.enterprise.taskmanager.application.task.UpdateTaskUseCase;
 import com.enterprise.taskmanager.application.user.AccessTokenIssuer;
 import com.enterprise.taskmanager.application.user.AuthenticateUserUseCase;
 import com.enterprise.taskmanager.application.user.PasswordHasher;
@@ -86,5 +93,63 @@ public class ApplicationUseCaseConfiguration {
             ProjectRepository projects,
             Clock applicationClock) {
         return new ArchiveProjectUseCase(users, organizationQueryPort, projects, applicationClock);
+    }
+
+    @Bean
+    CreateTaskUseCase createTaskUseCase(
+            UserRepository users,
+            ProjectRepository projects,
+            OrganizationQueryPort organizations,
+            TaskRepository tasks,
+            Clock applicationClock) {
+        return new CreateTaskUseCase(users, projects, organizations, tasks, applicationClock);
+    }
+
+    @Bean
+    ListTasksUseCase listTasksUseCase(
+            UserRepository users,
+            ProjectRepository projects,
+            OrganizationQueryPort organizations,
+            TaskRepository tasks) {
+        return new ListTasksUseCase(users, projects, organizations, tasks);
+    }
+
+    @Bean
+    GetTaskUseCase getTaskUseCase(
+            UserRepository users,
+            ProjectRepository projects,
+            OrganizationQueryPort organizations,
+            TaskRepository tasks) {
+        return new GetTaskUseCase(users, projects, organizations, tasks);
+    }
+
+    @Bean
+    UpdateTaskUseCase updateTaskUseCase(
+            UserRepository users,
+            ProjectRepository projects,
+            OrganizationQueryPort organizations,
+            TaskRepository tasks,
+            Clock applicationClock) {
+        return new UpdateTaskUseCase(users, projects, organizations, tasks, applicationClock);
+    }
+
+    @Bean
+    AssignTaskUseCase assignTaskUseCase(
+            UserRepository users,
+            ProjectRepository projects,
+            OrganizationQueryPort organizations,
+            TaskRepository tasks,
+            Clock applicationClock) {
+        return new AssignTaskUseCase(users, projects, organizations, tasks, applicationClock);
+    }
+
+    @Bean
+    TransitionTaskStatusUseCase transitionTaskStatusUseCase(
+            UserRepository users,
+            ProjectRepository projects,
+            OrganizationQueryPort organizations,
+            TaskRepository tasks,
+            Clock applicationClock) {
+        return new TransitionTaskStatusUseCase(users, projects, organizations, tasks, applicationClock);
     }
 }
